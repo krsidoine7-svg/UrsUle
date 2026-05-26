@@ -44,10 +44,10 @@
           <span class="text-sm font-semibold text-neutral-800 line-clamp-2 group-hover:text-primary-700 transition-colors">
             {{ task.title }}
           </span>
-          <div v-if="task.subtasks?.length" class="mt-1.5 w-full h-1 bg-neutral-100 rounded-full overflow-hidden">
+          <div v-if="subtasks.length" class="mt-1.5 w-full h-1 bg-neutral-100 rounded-full overflow-hidden">
             <div 
               class="h-full bg-green-500 transition-all duration-500" 
-              :style="{ width: `${Math.round((task.subtasks.filter(s => s.status === 'done').length / task.subtasks.length) * 100)}%` }"
+              :style="{ width: `${Math.round((subtasks.filter(s => s.status === 'done').length / subtasks.length) * 100)}%` }"
             ></div>
           </div>
         </div>
@@ -121,9 +121,9 @@
           <Calendar class="h-3 w-3" />
           {{ formatDate(task.deadline) }}
         </span>
-        <span v-if="task.subtasks?.length" class="flex items-center gap-1">
+        <span v-if="subtasks.length" class="flex items-center gap-1">
           <CheckSquare class="h-3 w-3" />
-          {{ task.subtasks.filter(s => s.status === 'done').length }}/{{ task.subtasks.length }}
+          {{ subtasks.filter(s => s.status === 'done').length }}/{{ subtasks.length }}
         </span>
         <span v-if="task.actual_duration_minutes > 0" class="flex items-center gap-1 text-primary-600">
           <Clock class="h-3 w-3" />
@@ -201,6 +201,8 @@ const uiStore = useUIStore()
 const tasksStore = useTasksStore()
 const timer = useTimer()
 const { toast } = useToast()
+
+const subtasks = computed(() => tasksStore.getSubtasks(props.task.id))
 
 const actionToConfirm = ref<{
   type: 'archive' | 'delete' | 'duplicate'

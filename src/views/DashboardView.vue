@@ -87,7 +87,7 @@
 
     <!-- Row 3: Distribution & Top Projects -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      <div class="lg:col-span-4 bg-white p-8 rounded-[3rem] border border-neutral-100 shadow-sm">
+      <div class="lg:col-span-4 bg-white p-8 rounded-[1.25rem] border border-neutral-100 shadow-sm">
         <div class="mb-8">
           <h3 class="text-xl font-display font-black text-neutral-900">Distribution</h3>
           <p class="text-xs text-neutral-400 font-bold uppercase tracking-widest mt-1">Par catégories</p>
@@ -115,7 +115,7 @@
         </div>
       </div>
 
-      <div class="lg:col-span-8 bg-white p-8 rounded-[3rem] border border-neutral-100 shadow-sm overflow-hidden">
+      <div class="lg:col-span-8 bg-white p-8 rounded-[1.25rem] border border-neutral-100 shadow-sm overflow-hidden">
         <div class="flex items-center justify-between mb-8">
           <div>
             <h3 class="text-xl font-display font-black text-neutral-900">Top Projets</h3>
@@ -175,7 +175,7 @@
     <!-- Row 5: Recent Activity & Time Logs -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <RecentActivityWidget :tasks="tasksStore.tasks" :time-sessions="tasksStore.timeSessions" />
-      <div class="bg-white p-8 rounded-[3rem] border border-neutral-100 shadow-sm">
+      <div class="bg-white p-8 rounded-[1.25rem] border border-neutral-100 shadow-sm">
         <div class="flex items-center justify-between mb-8">
           <h3 class="text-xl font-display font-black text-neutral-900">Journaux de Temps</h3>
           <Button variant="outline" size="sm" class="rounded-xl font-bold text-[10px] lowercase tracking-widest h-8 px-4">filtrer</Button>
@@ -193,7 +193,7 @@
                 </p>
               </div>
             </div>
-            <span class="text-xs font-black text-primary-600">{{ format(new Date(session.started_at), 'HH:mm') }}</span>
+            <span class="text-xs font-black text-primary-600">{{ formatSessionTime(session.started_at) }}</span>
           </div>
           <div v-if="tasksStore.timeSessions.length === 0" class="flex flex-col items-center justify-center py-12 text-neutral-400">
             <p class="text-xs font-bold lowercase tracking-widest">aucune session enregistrée</p>
@@ -262,10 +262,15 @@ const dateRange = ref({
 }) as Ref<DateRange>
 
 const dateInterval = computed(() => {
-  if (!dateRange.value.start || !dateRange.value.end) return null
-  return {
-    start: startOfDay(dateRange.value.start.toDate(getLocalTimeZone())),
-    end: endOfDay(dateRange.value.end.toDate(getLocalTimeZone()))
+  try {
+    if (!dateRange.value.start || !dateRange.value.end) return null
+    return {
+      start: startOfDay(dateRange.value.start.toDate(getLocalTimeZone())),
+      end: endOfDay(dateRange.value.end.toDate(getLocalTimeZone()))
+    }
+  } catch (e) {
+    console.error('Error parsing date interval:', e)
+    return null
   }
 })
 
@@ -291,25 +296,37 @@ async function loadData() {
   }
 }
 
+// Chargement automatique des données dès que l'utilisateur est connecté
 watch(() => authStore.user, (user) => {
   if (user) loadData()
 }, { immediate: true })
 
-onMounted(() => {
-  if (authStore.user) loadData()
-})
-
 // --- Data Calculations ---
+
+const isValidDate = (d: any) => {
+  if (!d) return false
+  const date = new Date(d)
+  return !isNaN(date.getTime())
+}
+
+const parseSafeDate = (d: any): Date => {
+  if (!d) return new Date(NaN)
+  return new Date(d)
+}
 
 // Filtered tasks by date range
 const filteredTasks = computed(() => {
-  if (!dateInterval.value) return tasksStore.tasks
-  return tasksStore.tasks.filter(t => {
-    // On utilise soit created_at soit completed_at selon le contexte, 
-    // mais pour le filtrage global on se base souvent sur la création ou l'activité
-    const date = new Date(t.created_at)
-    return isWithinInterval(date, dateInterval.value!)
-  })
+  try {
+    if (!dateInterval.value) return tasksStore.tasks
+    return tasksStore.tasks.filter(t => {
+      if (!t.created_at || !isValidDate(t.created_at)) return false
+      const date = parseSafeDate(t.created_at)
+      return isWithinInterval(date, dateInterval.value!)
+    })
+  } catch (e) {
+    console.error('Error computing filteredTasks:', e)
+    return tasksStore.tasks
+  }
 })
 
 // Helper for dynamic date ranges based on selection
@@ -328,97 +345,147 @@ const periodLabels = computed(() => {
 })
 
 // KPI Calculations (Filtered by selected period)
+const formatSessionTime = (startedAt: string) => {
+  try {
+    if (!isValidDate(startedAt)) return '--:--'
+    return format(parseSafeDate(startedAt), 'HH:mm')
+  } catch (e) {
+    console.error('Error formatting session time:', e)
+    return '--:--'
+  }
+}
+
 const completedInPeriod = computed(() => {
-  if (!dateInterval.value) return 0
-  return tasksStore.tasks.filter(t => 
-    t.status === 'done' && 
-    t.completed_at && 
-    isWithinInterval(new Date(t.completed_at), dateInterval.value!)
-  ).length
+  try {
+    if (!dateInterval.value) return 0
+    return tasksStore.tasks.filter(t => 
+      t.status === 'done' && 
+      isValidDate(t.completed_at) && 
+      isWithinInterval(parseSafeDate(t.completed_at), dateInterval.value!)
+    ).length
+  } catch (e) {
+    console.error('Error in completedInPeriod:', e)
+    return 0
+  }
 })
 
 const totalHoursInPeriod = computed(() => {
-  if (!dateInterval.value) return 0
-  const minutes = tasksStore.tasks
-    .filter(t => t.completed_at && isWithinInterval(new Date(t.completed_at), dateInterval.value!))
-    .reduce((acc, t) => acc + (t.actual_duration_minutes || 0), 0)
-  return Math.round(minutes / 60)
+  try {
+    if (!dateInterval.value) return 0
+    const minutes = tasksStore.tasks
+      .filter(t => isValidDate(t.completed_at) && isWithinInterval(parseSafeDate(t.completed_at), dateInterval.value!))
+      .reduce((acc, t) => acc + (t.actual_duration_minutes || 0), 0)
+    return Math.round(minutes / 60)
+  } catch (e) {
+    console.error('Error in totalHoursInPeriod:', e)
+    return 0
+  }
 })
 
 const successRateInPeriod = computed(() => {
-  if (!dateInterval.value) return 0
-  const created = filteredTasks.value.length
-  const completed = tasksStore.tasks.filter(t => 
-    t.status === 'done' && 
-    t.completed_at && 
-    isWithinInterval(new Date(t.completed_at), dateInterval.value!)
-  ).length
-  
-  if (created === 0) return 0
-  return Math.round((completed / created) * 100)
+  try {
+    if (!dateInterval.value) return 0
+    const created = filteredTasks.value.length
+    const completed = tasksStore.tasks.filter(t => 
+      t.status === 'done' && 
+      isValidDate(t.completed_at) && 
+      isWithinInterval(parseSafeDate(t.completed_at), dateInterval.value!)
+    ).length
+    
+    if (created === 0) return 0
+    return Math.round((completed / created) * 100)
+  } catch (e) {
+    console.error('Error in successRateInPeriod:', e)
+    return 0
+  }
 })
 
 // KPI Charts (Based on selected period)
 const completedTasksTrend = computed(() => {
-  return selectedPeriodDays.value.map(date => {
-    const dayStr = date.toDateString()
-    return tasksStore.tasks.filter(t => t.status === 'done' && t.completed_at && new Date(t.completed_at).toDateString() === dayStr).length
-  })
+  try {
+    return selectedPeriodDays.value.map(date => {
+      const dayStr = date.toDateString()
+      return tasksStore.tasks.filter(t => t.status === 'done' && isValidDate(t.completed_at) && parseSafeDate(t.completed_at).toDateString() === dayStr).length
+    })
+  } catch (e) {
+    console.error('Error in completedTasksTrend:', e)
+    return []
+  }
 })
 
 const hoursTrend = computed(() => {
-  return selectedPeriodDays.value.map(date => {
-    const dayStr = date.toDateString()
-    const mins = tasksStore.tasks
-      .filter(t => t.completed_at && new Date(t.completed_at).toDateString() === dayStr)
-      .reduce((acc, t) => acc + (t.actual_duration_minutes || 0), 0)
-    return Math.round(mins / 60)
-  })
+  try {
+    return selectedPeriodDays.value.map(date => {
+      const dayStr = date.toDateString()
+      const mins = tasksStore.tasks
+        .filter(t => isValidDate(t.completed_at) && parseSafeDate(t.completed_at).toDateString() === dayStr)
+        .reduce((acc, t) => acc + (t.actual_duration_minutes || 0), 0)
+      return Math.round(mins / 60)
+    })
+  } catch (e) {
+    console.error('Error in hoursTrend:', e)
+    return []
+  }
 })
 
 const successRateTrend = computed(() => {
-  return selectedPeriodDays.value.map(date => {
-    const dayStr = date.toDateString()
-    const created = tasksStore.tasks.filter(t => new Date(t.created_at).toDateString() === dayStr).length
-    const completed = tasksStore.tasks.filter(t => t.status === 'done' && t.completed_at && new Date(t.completed_at).toDateString() === dayStr).length
-    return created > 0 ? Math.round((completed / created) * 100) : 0
-  })
+  try {
+    return selectedPeriodDays.value.map(date => {
+      const dayStr = date.toDateString()
+      const created = tasksStore.tasks.filter(t => isValidDate(t.created_at) && parseSafeDate(t.created_at).toDateString() === dayStr).length
+      const completed = tasksStore.tasks.filter(t => t.status === 'done' && isValidDate(t.completed_at) && parseSafeDate(t.completed_at).toDateString() === dayStr).length
+      return created > 0 ? Math.round((completed / created) * 100) : 0
+    })
+  } catch (e) {
+    console.error('Error in successRateTrend:', e)
+    return []
+  }
 })
 
 // Main Charts
 const directIndirectData = computed(() => {
-  const labels = periodLabels.value
-  const direct = selectedPeriodDays.value.map(date => {
-    const dayStr = date.toDateString()
-    return tasksStore.tasks.filter(t => t.project_id && t.status === 'done' && t.completed_at && new Date(t.completed_at).toDateString() === dayStr).length
-  })
-  const indirect = selectedPeriodDays.value.map(date => {
-    const dayStr = date.toDateString()
-    return tasksStore.tasks.filter(t => !t.project_id && t.status === 'done' && t.completed_at && new Date(t.completed_at).toDateString() === dayStr).length
-  })
-  return { labels, direct, indirect }
+  try {
+    const labels = periodLabels.value
+    const direct = selectedPeriodDays.value.map(date => {
+      const dayStr = date.toDateString()
+      return tasksStore.tasks.filter(t => t.project_id && t.status === 'done' && isValidDate(t.completed_at) && parseSafeDate(t.completed_at).toDateString() === dayStr).length
+    })
+    const indirect = selectedPeriodDays.value.map(date => {
+      const dayStr = date.toDateString()
+      return tasksStore.tasks.filter(t => !t.project_id && t.status === 'done' && isValidDate(t.completed_at) && parseSafeDate(t.completed_at).toDateString() === dayStr).length
+    })
+    return { labels, direct, indirect }
+  } catch (e) {
+    console.error('Error in directIndirectData:', e)
+    return { labels: [], direct: [], indirect: [] }
+  }
 })
 
 const valueProducedData = computed(() => {
-  const priorityWeight = { urgent: 4, high: 3, normal: 2, low: 1 }
-  const current = selectedPeriodDays.value.map(date => {
-    const dayStr = date.toDateString()
-    return tasksStore.tasks
-      .filter(t => t.status === 'done' && t.completed_at && new Date(t.completed_at).toDateString() === dayStr)
-      .reduce((acc, t) => acc + (priorityWeight[t.priority] || 1), 0)
-  })
-  
-  // Previous period of same length
-  const periodLength = selectedPeriodDays.value.length
-  const previous = selectedPeriodDays.value.map(date => {
-    const prevDate = subDays(date, periodLength)
-    const dayStr = prevDate.toDateString()
-    return tasksStore.tasks
-      .filter(t => t.status === 'done' && t.completed_at && new Date(t.completed_at).toDateString() === dayStr)
-      .reduce((acc, t) => acc + (priorityWeight[t.priority] || 1), 0)
-  })
-  
-  return { labels: periodLabels.value, current, previous }
+  try {
+    const priorityWeight = { urgent: 4, high: 3, normal: 2, low: 1 }
+    const current = selectedPeriodDays.value.map(date => {
+      const dayStr = date.toDateString()
+      return tasksStore.tasks
+        .filter(t => t.status === 'done' && isValidDate(t.completed_at) && parseSafeDate(t.completed_at).toDateString() === dayStr)
+        .reduce((acc, t) => acc + (priorityWeight[t.priority] || 1), 0)
+    })
+    
+    // Previous period of same length
+    const periodLength = selectedPeriodDays.value.length
+    const previous = selectedPeriodDays.value.map(date => {
+      const prevDate = subDays(date, periodLength)
+      const dayStr = prevDate.toDateString()
+      return tasksStore.tasks
+        .filter(t => t.status === 'done' && isValidDate(t.completed_at) && parseSafeDate(t.completed_at).toDateString() === dayStr)
+        .reduce((acc, t) => acc + (priorityWeight[t.priority] || 1), 0)
+    })
+    
+    return { labels: periodLabels.value, current, previous }
+  } catch (e) {
+    console.error('Error in valueProducedData:', e)
+    return { labels: [], current: [], previous: [] }
+  }
 })
 
 const categoriesDistribution = computed(() => {
@@ -463,37 +530,47 @@ const topProjectsList = computed(() => {
 })
 
 const progressionData = computed(() => {
-  const done = selectedPeriodDays.value.map(date => {
-    const dayStr = date.toDateString()
-    return tasksStore.tasks.filter(t => t.status === 'done' && t.completed_at && new Date(t.completed_at).toDateString() === dayStr).length
-  })
-  const waiting = selectedPeriodDays.value.map(date => {
-    const dayStr = date.toDateString()
-    return tasksStore.tasks.filter(t => t.status !== 'done' && new Date(t.created_at).toDateString() === dayStr).length
-  })
-  return { labels: periodLabels.value, done, waiting }
+  try {
+    const done = selectedPeriodDays.value.map(date => {
+      const dayStr = date.toDateString()
+      return tasksStore.tasks.filter(t => t.status === 'done' && isValidDate(t.completed_at) && parseSafeDate(t.completed_at).toDateString() === dayStr).length
+    })
+    const waiting = selectedPeriodDays.value.map(date => {
+      const dayStr = date.toDateString()
+      return tasksStore.tasks.filter(t => t.status !== 'done' && isValidDate(t.created_at) && parseSafeDate(t.created_at).toDateString() === dayStr).length
+    })
+    return { labels: periodLabels.value, done, waiting }
+  } catch (e) {
+    console.error('Error in progressionData:', e)
+    return { labels: [], done: [], waiting: [] }
+  }
 })
 
 const timeVsValueData = computed(() => {
-  const months = Array.from({ length: 6 }, (_, i) => subDays(new Date(), (5 - i) * 30))
-  const labels = months.map(m => format(m, 'MMM', { locale: fr }))
-  
-  const hours = months.map(m => {
-    const start = startOfMonth(m)
-    const end = endOfDay(new Date(start.getFullYear(), start.getMonth() + 1, 0))
-    const mins = tasksStore.tasks
-      .filter(t => t.completed_at && isWithinInterval(new Date(t.completed_at), { start, end }))
-      .reduce((acc, t) => acc + (t.actual_duration_minutes || 0), 0)
-    return Math.round(mins / 60)
-  })
-  
-  const production = months.map(m => {
-    const start = startOfMonth(m)
-    const end = endOfDay(new Date(start.getFullYear(), start.getMonth() + 1, 0))
-    return tasksStore.tasks.filter(t => t.status === 'done' && t.completed_at && isWithinInterval(new Date(t.completed_at), { start, end })).length * 10 
-  })
-  
-  return { labels, hours, production }
+  try {
+    const months = Array.from({ length: 6 }, (_, i) => subDays(new Date(), (5 - i) * 30))
+    const labels = months.map(m => format(m, 'MMM', { locale: fr }))
+    
+    const hours = months.map(m => {
+      const start = startOfMonth(m)
+      const end = endOfDay(new Date(start.getFullYear(), start.getMonth() + 1, 0))
+      const mins = tasksStore.tasks
+        .filter(t => t.completed_at && isValidDate(t.completed_at) && isWithinInterval(parseSafeDate(t.completed_at), { start, end }))
+        .reduce((acc, t) => acc + (t.actual_duration_minutes || 0), 0)
+      return Math.round(mins / 60)
+    })
+    
+    const production = months.map(m => {
+      const start = startOfMonth(m)
+      const end = endOfDay(new Date(start.getFullYear(), start.getMonth() + 1, 0))
+      return tasksStore.tasks.filter(t => t.status === 'done' && t.completed_at && isValidDate(t.completed_at) && isWithinInterval(parseSafeDate(t.completed_at), { start, end })).length * 10 
+    })
+    
+    return { labels, hours, production }
+  } catch (e) {
+    console.error('Error computing timeVsValueData:', e)
+    return { labels: [], hours: [], production: [] }
+  }
 })
 
 const formatSessionDuration = (mins: number) => {
@@ -505,11 +582,11 @@ const formatSessionDuration = (mins: number) => {
 
 <style scoped>
 .animate-fade-in {
-  animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(30px); }
+  from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -526,18 +603,5 @@ const formatSessionDuration = (mins: number) => {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #d4d4d4;
-}
-</style>
-
-
-
-<style scoped>
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 </style>

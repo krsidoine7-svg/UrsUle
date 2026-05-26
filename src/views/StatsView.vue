@@ -131,12 +131,6 @@ async function handleExport() {
   }
 }
 
-onMounted(() => {
-  if (authStore.user) {
-    loadStats()
-  }
-})
-
 watch(() => authStore.user, (newUser) => {
   if (newUser) loadStats()
 }, { immediate: true })
@@ -149,7 +143,7 @@ watch(dateRange, () => {
 </script>
 
 <template>
-  <div id="stats-content" class="space-y-10 pb-20 animate-fade-in bg-neutral-50/30 p-8 rounded-[3rem]">
+  <div id="stats-content" class="space-y-10 pb-20 animate-fade-in bg-neutral-50/30 p-8 rounded-[1.25rem]">
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
       <div class="space-y-1">
@@ -223,7 +217,7 @@ watch(dateRange, () => {
 
     <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <!-- Completion Chart -->
-      <div class="bg-white p-8 rounded-[2.5rem] border border-neutral-100 shadow-sm">
+      <div class="bg-white p-8 rounded-[1.25rem] border border-neutral-100 shadow-sm">
         <div class="flex items-center gap-3 mb-8">
           <LineChart class="h-5 w-5 text-primary-500" />
           <h3 class="text-xl font-display font-bold">Tâches par jour</h3>
@@ -232,7 +226,7 @@ watch(dateRange, () => {
       </div>
 
       <!-- Category Chart -->
-      <div class="bg-white p-8 rounded-[2.5rem] border border-neutral-100 shadow-sm">
+      <div class="bg-white p-8 rounded-[1.25rem] border border-neutral-100 shadow-sm">
         <div class="flex items-center gap-3 mb-8">
           <PieChart class="h-5 w-5 text-indigo-500" />
           <h3 class="text-xl font-display font-bold">Répartition par catégorie</h3>
@@ -241,7 +235,7 @@ watch(dateRange, () => {
       </div>
 
       <!-- Mood Chart -->
-      <div class="bg-white p-8 rounded-[2.5rem] border border-neutral-100 shadow-sm">
+      <div class="bg-white p-8 rounded-[1.25rem] border border-neutral-100 shadow-sm">
         <div class="flex items-center gap-3 mb-8">
           <Activity class="h-5 w-5 text-orange-500" />
           <h3 class="text-xl font-display font-bold">Ton humeur post-tâche</h3>
@@ -250,7 +244,7 @@ watch(dateRange, () => {
       </div>
 
       <!-- Heatmap -->
-      <div class="bg-white p-8 rounded-[2.5rem] border border-neutral-100 shadow-sm">
+      <div class="bg-white p-8 rounded-[1.25rem] border border-neutral-100 shadow-sm">
         <div class="flex items-center gap-3 mb-8">
           <Calendar class="h-5 w-5 text-green-500" />
           <h3 class="text-xl font-display font-bold">Ta régularité (180j)</h3>

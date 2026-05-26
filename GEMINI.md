@@ -51,6 +51,7 @@ Pour faire fonctionner le projet, le schéma doit être appliqué sur votre nouv
 7. [`007_notifications.sql`](file:///c:/Users/Toto.ADMINISTRATOR/Desktop/UrsUle-main/supabase/migrations/007_notifications.sql)
 8. [`008_webhook_logs.sql`](file:///c:/Users/Toto.ADMINISTRATOR/Desktop/UrsUle-main/supabase/migrations/008_webhook_logs.sql)
 9. [`009_sync_webhook_logs.sql`](file:///c:/Users/Toto.ADMINISTRATOR/Desktop/UrsUle-main/supabase/migrations/009_sync_webhook_logs.sql)
+10. [`010_enable_realtime.sql`](file:///c:/Users/Toto.ADMINISTRATOR/Desktop/UrsUle-main/supabase/migrations/010_enable_realtime.sql) (Activation de Supabase Realtime pour la synchronisation automatique)
 
 ---
 
@@ -68,6 +69,7 @@ Pour faire fonctionner le projet, le schéma doit être appliqué sur votre nouv
 ---
 
 ## 📋 Prochaines Actions suggérées
-- [ ] Exécuter les scripts de migrations SQL de `001` à `009` sur la console Supabase.
+- [ ] Exécuter les scripts de migrations SQL de `001` à `010` sur la console Supabase (SQL Editor).
 - [ ] Tester l'inscription d'un nouvel utilisateur depuis l'interface locale.
 - [ ] Configurer un seau (bucket) public nommé `task-images` dans le menu **Storage** du tableau de bord Supabase pour activer la gestion des images.
+

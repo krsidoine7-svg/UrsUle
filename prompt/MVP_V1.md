@@ -21,7 +21,7 @@
 CONTEXTE : Je crée une application web appelée UrsUle — un gestionnaire d'agenda et de tâches.
 Stack : Vue 3 + TypeScript + Vite + Tailwind CSS + shadcn-vue + Supabase + Vercel.
 Couleurs : bleu (#2563EB), vert forêt (#16A34A), blanc.
-Police : Sora (titres) + Inter (corps).
+Police :  (titres) + Inter (corps).
 
 TÂCHE : Initialise le projet complet.
 

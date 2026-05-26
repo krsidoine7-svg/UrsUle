@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white rounded-[1.8rem] border border-neutral-100 p-10 shadow-sm hover:shadow-2xl transition-all duration-500 h-full flex flex-col group/activity">
+  <div class="bg-white rounded-[1.25rem] border border-neutral-100 p-10 shadow-sm hover:shadow-2xl transition-all duration-500 h-full flex flex-col group/activity">
     <div class="flex items-center justify-between mb-10">
       <div>
         <h3 class="text-2xl font-display font-black text-neutral-900 leading-tight">Activité</h3>
@@ -30,7 +30,7 @@
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-1 mb-2">
             <h4 class="text-base font-bold text-neutral-900 group-hover:text-primary-600 transition-colors">{{ activity.title }}</h4>
             <span class="text-[10px] font-black text-neutral-400 lowercase tracking-[0.2em] whitespace-nowrap bg-neutral-50 px-2 py-0.5 rounded-full">
-              {{ formatDistanceToNow(activity.date, { locale: fr, addSuffix: true }) }}
+              {{ formatActivityDate(activity.date) }}
             </span>
           </div>
           <p class="text-sm text-neutral-500 font-medium line-clamp-1 leading-relaxed">
@@ -65,24 +65,41 @@ const props = defineProps<{
 
 const router = useRouter()
 
+const isValidDate = (d: any) => {
+  if (!d) return false
+  const date = new Date(d)
+  return !isNaN(date.getTime())
+}
+
+const formatActivityDate = (date: Date) => {
+  try {
+    return formatDistanceToNow(date, { locale: fr, addSuffix: true })
+  } catch (e) {
+    console.error('Error formatting activity date:', e)
+    return 'récemment'
+  }
+}
+
 const activities = computed(() => {
   const list: any[] = []
   
   props.tasks.forEach(task => {
     // Action Création
-    list.push({
-      id: `create-${task.id}`,
-      taskId: task.id,
-      type: 'create',
-      title: 'Nouvelle tâche',
-      description: task.title,
-      date: new Date(task.created_at),
-      icon: Plus,
-      color: 'bg-blue-50 text-blue-600'
-    })
+    if (isValidDate(task.created_at)) {
+      list.push({
+        id: `create-${task.id}`,
+        taskId: task.id,
+        type: 'create',
+        title: 'Nouvelle tâche',
+        description: task.title,
+        date: new Date(task.created_at),
+        icon: Plus,
+        color: 'bg-blue-50 text-blue-600'
+      })
+    }
     
     // Action Complétion
-    if (task.completed_at) {
+    if (task.completed_at && isValidDate(task.completed_at)) {
       list.push({
         id: `complete-${task.id}`,
         taskId: task.id,
@@ -98,16 +115,18 @@ const activities = computed(() => {
     // Commentaires
     if (task.comments) {
       task.comments.forEach((comment: any) => {
-        list.push({
-          id: `comment-${comment.id}`,
-          taskId: task.id,
-          type: 'comment',
-          title: 'Nouvelle note',
-          description: comment.content,
-          date: new Date(comment.created_at),
-          icon: MessageSquare,
-          color: 'bg-amber-50 text-amber-600'
-        })
+        if (isValidDate(comment.created_at)) {
+          list.push({
+            id: `comment-${comment.id}`,
+            taskId: task.id,
+            type: 'comment',
+            title: 'Nouvelle note',
+            description: comment.content,
+            date: new Date(comment.created_at),
+            icon: MessageSquare,
+            color: 'bg-amber-50 text-amber-600'
+          })
+        }
       })
     }
   })
@@ -115,16 +134,18 @@ const activities = computed(() => {
   // Time Sessions
   if (props.timeSessions) {
     props.timeSessions.forEach(session => {
-      list.push({
-        id: `session-${session.id}`,
-        taskId: session.task_id,
-        type: 'session',
-        title: 'Session de focus',
-        description: `${session.task?.title || 'Travail'} • ${session.duration_minutes} min`,
-        date: new Date(session.started_at),
-        icon: Activity,
-        color: 'bg-purple-50 text-purple-600'
-      })
+      if (isValidDate(session.started_at)) {
+        list.push({
+          id: `session-${session.id}`,
+          taskId: session.task_id,
+          type: 'session',
+          title: 'Session de focus',
+          description: `${session.task?.title || 'Travail'} • ${session.duration_minutes} min`,
+          date: new Date(session.started_at),
+          icon: Activity,
+          color: 'bg-purple-50 text-purple-600'
+        })
+      }
     })
   }
 

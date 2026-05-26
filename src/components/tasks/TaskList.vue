@@ -50,15 +50,15 @@
             <TableCell class="font-medium text-neutral-800">
               <div class="flex flex-col gap-1">
                 <span>{{ task.title }}</span>
-                <div v-if="task.subtasks?.length" class="flex items-center gap-2">
+                <div v-if="getSubtasks(task.id).length" class="flex items-center gap-2">
                   <div class="w-16 h-1 bg-neutral-100 rounded-full overflow-hidden">
                     <div 
                       class="h-full bg-green-500" 
-                      :style="{ width: `${Math.round((task.subtasks.filter(s => s.status === 'done').length / task.subtasks.length) * 100)}%` }"
+                      :style="{ width: `${Math.round((getSubtasks(task.id).filter(s => s.status === 'done').length / getSubtasks(task.id).length) * 100)}%` }"
                     ></div>
                   </div>
                   <span class="text-[10px] text-neutral-400 font-bold">
-                    {{ task.subtasks.filter(s => s.status === 'done').length }}/{{ task.subtasks.length }}
+                    {{ getSubtasks(task.id).filter(s => s.status === 'done').length }}/{{ getSubtasks(task.id).length }}
                   </span>
                 </div>
               </div>
@@ -236,6 +236,8 @@ const emit = defineEmits<{
 
 const tasksStore = useTasksStore()
 const { toast } = useToast()
+
+const getSubtasks = (taskId: string) => tasksStore.getSubtasks(taskId)
 
 const selectedTasks = ref<string[]>([])
 const sortKey = ref<keyof Task | 'title'>('title')

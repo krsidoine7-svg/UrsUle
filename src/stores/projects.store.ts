@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { supabase } from '@/services/supabase'
 import { projectsService } from '@/services/projects.service'
 import type { Project, CreateProjectDTO, UpdateProjectDTO, ProjectStatus } from '@/types/project.types'
 
@@ -74,6 +75,41 @@ export const useProjectsStore = defineStore('projects', () => {
     }
   }
 
+  async function handleRealtimeChange(payload: any) {
+    console.log('Projects Realtime change received:', payload)
+    const projectId = payload.new?.id || payload.old?.id
+    if (!projectId) return
+
+    if (payload.eventType === 'INSERT') {
+      const idx = projects.value.findIndex(p => p.id === projectId)
+      if (idx === -1) {
+        projects.value.unshift(payload.new as Project)
+      }
+    } else if (payload.eventType === 'UPDATE') {
+      const idx = projects.value.findIndex(p => p.id === projectId)
+      if (idx !== -1) {
+        projects.value[idx] = { ...projects.value[idx], ...payload.new }
+      }
+    } else if (payload.eventType === 'DELETE') {
+      projects.value = projects.value.filter(p => p.id !== projectId)
+    }
+  }
+
+  function subscribeToProjects() {
+    const channel = supabase
+      .channel('projects-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'projects' },
+        (payload) => handleRealtimeChange(payload)
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }
+
   return {
     projects,
     loading,
@@ -84,6 +120,7 @@ export const useProjectsStore = defineStore('projects', () => {
     createProject,
     updateProject,
     deleteProject,
-    projectsService
+    projectsService,
+    subscribeToProjects
   }
 })

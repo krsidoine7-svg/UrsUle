@@ -182,7 +182,7 @@ const configs = reactive(
   })
 )
 
-const layouts = reactive<vNG.Layouts>({
+let layouts = reactive<vNG.Layouts>({
   nodes: {},
 })
 

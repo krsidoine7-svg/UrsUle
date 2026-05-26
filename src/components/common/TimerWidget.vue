@@ -385,10 +385,8 @@ watch(isRunning, (newVal, oldVal) => {
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&display=swap');
-
 .font-mono {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Inter', sans-serif;
 }
 
 .animate-fade-in {

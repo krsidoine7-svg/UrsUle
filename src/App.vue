@@ -11,6 +11,7 @@ import AppreciationModal from '@/components/tasks/AppreciationModal.vue'
 import FocusMode from '@/components/common/FocusMode.vue'
 import { useUIStore } from '@/stores/ui.store'
 import { useTasksStore } from '@/stores/tasks.store'
+import { useProjectsStore } from '@/stores/projects.store'
 import { Toaster } from '@/components/ui/toast'
 import { useToast } from '@/components/ui/toast/use-toast'
 
@@ -28,6 +29,7 @@ const showLayout = computed(() => {
 })
 
 const tasksStore = useTasksStore()
+const projectsStore = useProjectsStore()
 
 const handleValidationSuccess = () => {
   uiStore.finishValidation(true)
@@ -62,14 +64,26 @@ const handleAppreciationSelect = async (appreciation: string) => {
   uiStore.closeAppreciation()
 }
 
-let unsubscribe: (() => void) | null = null
+let unsubscribeTasks: (() => void) | null = null
+let unsubscribeProjects: (() => void) | null = null
 
 const handleSubscription = (isAuth: boolean) => {
-  if (isAuth && !unsubscribe) {
-    unsubscribe = tasksStore.subscribeToTasks()
-  } else if (!isAuth && unsubscribe) {
-    unsubscribe()
-    unsubscribe = null
+  if (isAuth) {
+    if (!unsubscribeTasks) {
+      unsubscribeTasks = tasksStore.subscribeToTasks()
+    }
+    if (!unsubscribeProjects) {
+      unsubscribeProjects = projectsStore.subscribeToProjects()
+    }
+  } else {
+    if (unsubscribeTasks) {
+      unsubscribeTasks()
+      unsubscribeTasks = null
+    }
+    if (unsubscribeProjects) {
+      unsubscribeProjects()
+      unsubscribeProjects = null
+    }
   }
 }
 
@@ -78,7 +92,8 @@ watch(() => authStore.isAuthenticated, (isAuth: boolean) => {
 }, { immediate: true })
 
 onUnmounted(() => {
-  if (unsubscribe) unsubscribe()
+  if (unsubscribeTasks) unsubscribeTasks()
+  if (unsubscribeProjects) unsubscribeProjects()
 })
 </script>
 

@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
-import * as XLSX from 'xlsx'
+import * as XLSX from 'sheetjs-xlsx'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import type { Task } from '@/types/task.types'

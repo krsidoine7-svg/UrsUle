@@ -52,9 +52,8 @@ export default {
         },
       },
       fontFamily: {
-        display: ['Sora', 'sans-serif'],
+        display: ['Inter', 'sans-serif'],
         body:    ['Inter', 'sans-serif'],
-        mono:    ['JetBrains Mono', 'monospace'],
         sans:    ['Inter', 'sans-serif'],
       },
       borderRadius: {

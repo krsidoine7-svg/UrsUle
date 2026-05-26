@@ -75,8 +75,7 @@ async function addSubtask() {
       status: 'todo'
     })
     newTitle.value = ''
-    // Attendre le prochain tick pour que le store soit à jour
-    setTimeout(() => emit('update-progress', progress.value), 50)
+    emit('update-progress', progress.value)
   } catch (e) {
     toast({ title: 'Erreur', description: 'Impossible de créer la sous-tâche', variant: 'destructive' })
   } finally {
@@ -92,7 +91,7 @@ async function toggleSubtask(subtask: Task) {
       status: newStatus,
       completed_at: newStatus === 'done' ? new Date().toISOString() : undefined
     })
-    setTimeout(() => emit('update-progress', progress.value), 50)
+    emit('update-progress', progress.value)
   } catch (e) {
     toast({ title: 'Erreur', description: 'Échec de la mise à jour', variant: 'destructive' })
   }
@@ -102,7 +101,7 @@ async function deleteSubtask(id: string) {
   if (!id) return
   try {
     await tasksStore.deleteTask(id)
-    setTimeout(() => emit('update-progress', progress.value), 50)
+    emit('update-progress', progress.value)
     toast({ title: 'Sous-tâche supprimée' })
   } catch (e) {
     toast({ title: 'Erreur', description: 'Échec de la suppression', variant: 'destructive' })

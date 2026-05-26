@@ -71,7 +71,7 @@ const chartOptions = {
     tooltip: {
       backgroundColor: '#171717',
       padding: 12,
-      titleFont: { family: 'Sora', size: 12, weight: 'bold' as const },
+      titleFont: { family: 'Inter', size: 12, weight: 'bold' as const },
       bodyFont: { family: 'Inter', size: 12 },
       cornerRadius: 12,
       displayColors: false

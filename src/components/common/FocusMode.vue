@@ -193,6 +193,6 @@ onUnmounted(() => {
 
 <style scoped>
 .font-display {
-  font-family: 'Sora', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 </style>
