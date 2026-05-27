@@ -224,9 +224,8 @@
 
       <TaskDetail 
         :task="selectedTaskForDetail"
-        @close="selectedTaskForDetail = null"
+        @close="selectedTaskId = null"
         @edit="openEditForm"
-        @update-task="selectedTaskForDetail = $event"
       />
     </div>
 
@@ -328,7 +327,12 @@ const { exportToPDF, exportTasksToExcel, exportToJSON } = useExport()
 
 const currentView = ref(uiStore.activeView) // kept for backward compat but uiStore is the source of truth
 const showTrash = ref(false)
-const selectedTaskForDetail = ref<Task | null>(null)
+// On stocke l'ID de la tâche sélectionnée, pas l'objet lui-même,
+// pour que le panneau détail soit toujours synchronisé avec le store.
+const selectedTaskId = ref<string | null>(null)
+const selectedTaskForDetail = computed(() =>
+  selectedTaskId.value ? (tasksStore.tasks.find(t => t.id === selectedTaskId.value) ?? null) : null
+)
 const taskToDelete = ref<string | null>(null)
 const isDeleteDialogOpen = ref(false)
 
@@ -426,12 +430,12 @@ function openCreateForm() {
 }
 
 function openEditForm(task: Task) {
-  selectedTaskForDetail.value = null // Ferme le détail
-  uiStore.openTaskForm(task)         // Ouvre le formulaire
+  selectedTaskId.value = null  // Ferme le détail
+  uiStore.openTaskForm(task)   // Ouvre le formulaire
 }
 
 function openDetail(task: Task) {
-  selectedTaskForDetail.value = task
+  selectedTaskId.value = task.id
 }
 
 function onTaskSaved() {

@@ -82,13 +82,17 @@ export const useProjectsStore = defineStore('projects', () => {
 
     if (payload.eventType === 'INSERT') {
       const idx = projects.value.findIndex(p => p.id === projectId)
-      if (idx === -1) {
+      if (idx === -1 && !payload.new.deleted_at) {
         projects.value.unshift(payload.new as Project)
       }
     } else if (payload.eventType === 'UPDATE') {
       const idx = projects.value.findIndex(p => p.id === projectId)
       if (idx !== -1) {
-        projects.value[idx] = { ...projects.value[idx], ...payload.new }
+        if (payload.new.deleted_at) {
+          projects.value = projects.value.filter(p => p.id !== projectId)
+        } else {
+          projects.value[idx] = { ...projects.value[idx], ...payload.new }
+        }
       }
     } else if (payload.eventType === 'DELETE') {
       projects.value = projects.value.filter(p => p.id !== projectId)

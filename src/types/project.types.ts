@@ -13,6 +13,7 @@ export interface Project {
   budget_currency: string
   notes?: string
   metadata: Record<string, any>
+  deleted_at?: string
   created_at: string
   updated_at: string
   // Relations
@@ -21,12 +22,12 @@ export interface Project {
 
 export interface CreateProjectDTO {
   name: string
-  description?: string
+  description?: string | null
   color?: string
   icon?: string
   status?: ProjectStatus
-  deadline?: string
-  budget?: number
+  deadline?: string | null
+  budget?: number | null
   budget_currency?: string
 }
 

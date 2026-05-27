@@ -69,6 +69,34 @@ const stats = computed(() => {
   return { total, completed, progress }
 })
 
+// Cartographie d'impact dynamique
+const activeTasksAffected = computed(() => {
+  if (!project.value || !project.value.tasks) return []
+  return project.value.tasks.filter((t: any) => !t.deleted_at)
+})
+
+const tasksStatsAffected = computed(() => {
+  const tasks = activeTasksAffected.value
+  const todo = tasks.filter((t: any) => t.status === 'todo').length
+  const inProgress = tasks.filter((t: any) => t.status === 'in_progress').length
+  const done = tasks.filter((t: any) => t.status === 'done').length
+  
+  const totalMinutes = tasks.reduce((sum: number, t: any) => sum + (t.estimated_duration_minutes || 0), 0)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  const durationStr = hours > 0 
+    ? `${hours}h${minutes > 0 ? ` ${minutes}min` : ''}` 
+    : `${minutes} min`
+
+  return {
+    todo,
+    inProgress,
+    done,
+    totalMinutes,
+    durationStr
+  }
+})
+
 onMounted(async () => {
   await loadProject()
 })
@@ -179,22 +207,96 @@ function openEditForm(task: any) {
                 <Trash2 class="h-4 w-4 mr-2" /> Supprimer
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent class="rounded-[2rem] border-none p-8">
-              <AlertDialogHeader>
-                <AlertDialogTitle class="text-2xl font-display font-black">Es-tu vraiment sûr ?</AlertDialogTitle>
-                <AlertDialogDescription class="text-neutral-500 font-medium py-2">
-                  Cette action est irréversible. Cela supprimera définitivement le projet 
-                  <span class="font-bold text-neutral-900">"{{ project.name }}"</span> 
-                  et toutes les tâches qui lui sont associées.
+            <AlertDialogContent class="rounded-[2.5rem] border-none p-8 max-w-2xl bg-white/95 backdrop-blur-md shadow-2xl">
+              <AlertDialogHeader class="space-y-3">
+                <AlertDialogTitle class="text-3xl font-display font-black text-neutral-900 leading-tight">
+                  Supprimer le projet ?
+                </AlertDialogTitle>
+                <AlertDialogDescription class="text-neutral-500 font-medium text-sm">
+                  Le projet <span class="font-bold text-neutral-900">"{{ project.name }}"</span> sera déplacé dans la corbeille. 
+                  Vous pourrez le restaurer ultérieurement.
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <AlertDialogFooter class="gap-3 mt-4">
-                <AlertDialogCancel class="rounded-xl h-12 px-6 font-bold border-neutral-100 hover:bg-neutral-50">Annuler</AlertDialogCancel>
+
+              <!-- Cartographie d'Impact de Suppression Dynamique -->
+              <div class="mt-6 space-y-4">
+                <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
+                  <span class="text-xs font-black text-neutral-400 uppercase tracking-widest">
+                    📊 Cartographie d'impact
+                  </span>
+                  <span class="text-xs font-bold text-neutral-500 bg-neutral-100 px-2.5 py-1 rounded-full">
+                    {{ activeTasksAffected.length }} tâche(s) liée(s)
+                  </span>
+                </div>
+
+                <!-- Stats de l'impact -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div class="p-3.5 bg-neutral-50 rounded-2xl border border-neutral-100 flex flex-col gap-1">
+                    <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Temps perdu</span>
+                    <span class="text-sm font-black text-neutral-800">{{ tasksStatsAffected.durationStr }}</span>
+                  </div>
+                  <div class="p-3.5 bg-amber-50/50 rounded-2xl border border-amber-100/50 flex flex-col gap-1">
+                    <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">À faire</span>
+                    <span class="text-sm font-black text-amber-800">{{ tasksStatsAffected.todo }}</span>
+                  </div>
+                  <div class="p-3.5 bg-blue-50/50 rounded-2xl border border-blue-100/50 flex flex-col gap-1">
+                    <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">En cours</span>
+                    <span class="text-sm font-black text-blue-800">{{ tasksStatsAffected.inProgress }}</span>
+                  </div>
+                  <div class="p-3.5 bg-green-50/50 rounded-2xl border border-green-100/50 flex flex-col gap-1">
+                    <span class="text-[10px] font-bold text-green-600 uppercase tracking-wider">Terminées</span>
+                    <span class="text-sm font-black text-green-800">{{ tasksStatsAffected.done }}</span>
+                  </div>
+                </div>
+
+                <!-- Warning Message Box -->
+                <div class="p-4 bg-red-50/60 border border-red-100/60 rounded-3xl flex items-start gap-3">
+                  <div class="p-2 bg-red-100 text-red-600 rounded-xl mt-0.5">
+                    <Trash2 class="h-4 w-4" />
+                  </div>
+                  <div class="space-y-1">
+                    <span class="text-sm font-bold text-red-800 block">Soft-delete en cascade</span>
+                    <p class="text-xs text-red-700/90 font-medium leading-relaxed">
+                      Conformément aux règles d'intégrité relationnelle d'UrsUle, toutes les tâches associées ci-dessous seront également soft-supprimées. Aucune donnée ne sera effacée définitivement de la base de données.
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Liste des tâches impactées -->
+                <div v-if="activeTasksAffected.length > 0" class="space-y-2">
+                  <span class="text-xs font-bold text-neutral-400 uppercase tracking-wider block">Tâches concernées :</span>
+                  <div class="max-h-40 overflow-y-auto border border-neutral-100 rounded-2xl p-3 bg-neutral-50/30 divide-y divide-neutral-100">
+                    <div 
+                      v-for="task in activeTasksAffected" 
+                      :key="task.id"
+                      class="py-2.5 flex items-center justify-between text-xs font-semibold"
+                    >
+                      <span class="text-neutral-700 truncate max-w-sm">{{ task.title }}</span>
+                      <Badge 
+                        variant="secondary"
+                        :class="[
+                          task.status === 'done' ? 'bg-green-50 text-green-600 border border-green-100' :
+                          task.status === 'in_progress' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
+                          'bg-neutral-100 text-neutral-500 border border-neutral-200'
+                        ]"
+                        class="text-[9px] font-bold uppercase tracking-wider rounded-lg py-0.5 px-2"
+                      >
+                        {{ task.status === 'done' ? 'Terminé' : task.status === 'in_progress' ? 'En cours' : 'À faire' }}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <AlertDialogFooter class="gap-3 mt-8">
+                <AlertDialogCancel class="rounded-2xl h-12 px-6 font-bold border-neutral-200 text-neutral-500 hover:bg-neutral-50 hover:text-neutral-700 transition-all">
+                  Annuler
+                </AlertDialogCancel>
                 <AlertDialogAction 
                   @click="handleDelete" 
-                  class="rounded-xl h-12 px-6 font-bold bg-red-600 hover:bg-red-700 shadow-lg shadow-red-100 border-none"
+                  class="rounded-2xl h-12 px-6 font-bold bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-100 border-none transition-all hover:scale-[1.02] active:scale-95"
                 >
-                  Oui, supprimer le projet
+                  <Trash2 class="h-4 w-4 mr-2" /> Supprimer le projet
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

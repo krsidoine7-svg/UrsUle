@@ -9,6 +9,7 @@ export const projectsService = {
         *,
         tasks:tasks(id, status)
       `)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -58,7 +59,7 @@ export const projectsService = {
   async delete(id: string): Promise<void> {
     const { error } = await supabase
       .from('projects')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', id)
     if (error) throw error
   }

@@ -320,7 +320,7 @@ watch(() => props.task, (newTask) => {
       description_json: newTask.description_json,
       status: newTask.status || 'todo',
       priority: newTask.priority || 'normal',
-      category_id: newTask.category_id,
+      category_id: newTask.category_id || categoriesStore.categories[0]?.id || undefined,
       project_id: newTask.project_id || 'none',
       deadline: newTask.deadline || '',
       estimated_duration_minutes: newTask.estimated_duration_minutes,
@@ -347,7 +347,7 @@ function resetForm() {
     description: '',
     status: 'todo',
     priority: 'normal',
-    category_id: undefined,
+    category_id: categoriesStore.categories[0]?.id || undefined,
     project_id: 'none',
     deadline: '',
     estimated_duration_minutes: undefined,
@@ -387,63 +387,63 @@ async function onSubmit() {
     return
   }
 
-  loading.value = true
+  // Fusionner la date et l'heure pour l'échéance si définie
+  let calculatedDeadline: string | null = null
+  if (deadlineDate.value) {
+    const [hours, minutes] = deadlineTime.value.split(':')
+    const d = deadlineDate.value as any
+    const date = new Date(d.year, d.month - 1, d.day)
+    date.setHours(parseInt(hours), parseInt(minutes))
+    calculatedDeadline = date.toISOString()
+  }
+
+  const dto: CreateTaskDTO = {
+    title: form.title.trim(),
+    description: form.description || null,
+    description_json: form.description_json,
+    status: form.status,
+    priority: form.priority,
+    category_id: form.category_id,
+    project_id: form.project_id === 'none' ? null : form.project_id,
+    deadline: calculatedDeadline || null, // Résout l'erreur de date vide "" -> null
+    estimated_duration_minutes: form.estimated_duration_minutes 
+      ? (durationUnit.value === 'h' ? Number(form.estimated_duration_minutes) * 60 : Number(form.estimated_duration_minutes)) 
+      : null, // Résout l'erreur de durée vide "" -> null
+    is_pinned: form.is_pinned,
+    tags: form.tags,
+    recurrence_type: form.recurrence_type,
+    validation_type: form.validation_type,
+    parent_task_id: form.parent_task_id || null,
+  }
+
+  // 🚀 FERMETURE ET ÉMISSION IMMÉDIATE POUR EXPÉRIENCE INSTANTANÉE !
+  onClose()
+  emit('saved')
+
+  // Exécution de l'appel réseau en arrière-plan sans bloquer l'interface
   try {
-    console.log("🚀 Soumission du formulaire tâche...", form.title);
-
-    // Merge date and time for deadline
-    if (deadlineDate.value) {
-      const [hours, minutes] = deadlineTime.value.split(':')
-      // Conversion sécurisée en objet Date natif
-      const d = deadlineDate.value as any
-      const date = new Date(d.year, d.month - 1, d.day)
-      date.setHours(parseInt(hours), parseInt(minutes))
-      form.deadline = date.toISOString()
-      console.log("📅 Deadline calculée:", form.deadline);
-    }
-
-    const dto: CreateTaskDTO = {
-      title: form.title,
-      description: form.description,
-      description_json: form.description_json,
-      status: form.status,
-      priority: form.priority,
-      category_id: form.category_id,
-      project_id: form.project_id === 'none' ? undefined : form.project_id,
-      deadline: form.deadline,
-      estimated_duration_minutes: durationUnit.value === 'h' && form.estimated_duration_minutes 
-        ? form.estimated_duration_minutes * 60 
-        : form.estimated_duration_minutes,
-      is_pinned: form.is_pinned,
-      tags: form.tags,
-      recurrence_type: form.recurrence_type,
-      validation_type: form.validation_type,
-      parent_task_id: form.parent_task_id,
-    }
-
     if (isEditMode.value) {
-      console.log("📡 Mise à jour tâche ID:", props.task.id);
+      console.log("📡 Mise à jour tâche ID en arrière-plan:", props.task.id);
       await tasksStore.updateTask(props.task.id, dto)
-      toast({ title: 'Tâche mise à jour', description: 'Les modifications ont été enregistrées.' })
+      toast({ 
+        title: 'Tâche mise à jour ! ✨', 
+        description: `"${dto.title}" a été modifiée avec succès.` 
+      })
     } else {
-      console.log("📡 Création nouvelle tâche...");
-      await tasksStore.createTask(dto)
-      toast({ title: 'Tâche créée', description: 'Ta nouvelle tâche est prête !' })
+      console.log("📡 Création tâche en arrière-plan...");
+      const newTask = await tasksStore.createTask(dto)
+      toast({ 
+        title: 'Tâche créée ! 🚀', 
+        description: `"${newTask.title}" est prête.` 
+      })
     }
-
-    console.log("✅ Opération réussie");
-    emit('saved')
-    onClose()
   } catch (e: any) {
     console.error("❌ Erreur lors de l'enregistrement de la tâche:", e);
     toast({ 
-      title: 'Erreur', 
-      description: e.message || 'Impossible d\'enregistrer la tâche. Vérifiez votre connexion.', 
+      title: 'Échec de la sauvegarde ⚠️', 
+      description: e.message || 'Impossible d\'enregistrer la tâche. Vérifie ta connexion.', 
       variant: 'destructive' 
     })
-  } finally {
-    loading.value = false
-    console.log("🏁 Fin de soumission (loading false)");
   }
 }
 

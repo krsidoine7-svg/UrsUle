@@ -70,19 +70,19 @@ export interface TaskComment {
 
 export interface CreateTaskDTO {
   title: string
-  description?: string
-  description_json?: object
+  description?: string | null
+  description_json?: object | null
   status?: TaskStatus
   priority?: TaskPriority
   category_id?: string
-  project_id?: string
-  parent_task_id?: string
-  deadline?: string
-  estimated_duration_minutes?: number
+  project_id?: string | null
+  parent_task_id?: string | null
+  deadline?: string | null
+  estimated_duration_minutes?: number | null
   recurrence_type?: RecurrenceType
   validation_type?: ValidationType
-  validation_question?: string
-  validation_answer?: string
+  validation_question?: string | null
+  validation_answer?: string | null
   is_pinned?: boolean
   tags?: string[]
   sort_order?: number

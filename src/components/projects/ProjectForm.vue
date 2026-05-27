@@ -126,25 +126,44 @@ function resetForm() {
 async function handleSubmit() {
   if (!form.value.name.trim()) return
   
-  isLoading.value = true
+  // 🚀 FERMETURE ET ÉMISSION IMMÉDIATE POUR EXPÉRIENCE INSTANTANÉE !
+  emit('close')
+  
   try {
-    if (props.project) {
-      await projectsStore.updateProject(props.project.id, form.value)
-      toast({ title: 'Projet mis à jour !' })
-    } else {
-      await projectsStore.createProject(form.value)
-      toast({ title: 'Projet créé !' })
+    const payload = {
+      name: form.value.name.trim(),
+      description: form.value.description || null,
+      color: form.value.color,
+      icon: form.value.icon,
+      status: form.value.status,
+      deadline: form.value.deadline ? new Date(form.value.deadline).toISOString() : null, // Résout l'erreur de date vide "" -> null
+      budget: form.value.budget ? Number(form.value.budget) : null, // Résout l'erreur de budget vide -> null
+      budget_currency: form.value.budget_currency
     }
-    emit('close')
+
+    if (props.project) {
+      console.log("📡 Mise à jour projet en arrière-plan ID:", props.project.id);
+      await projectsStore.updateProject(props.project.id, payload)
+      toast({ 
+        title: 'Projet mis à jour ! ✨', 
+        description: `Le projet "${payload.name}" a été enregistré.` 
+      })
+    } else {
+      console.log("📡 Création projet en arrière-plan...");
+      await projectsStore.createProject(payload)
+      toast({ 
+        title: 'Projet créé ! 🚀', 
+        description: `Le projet "${payload.name}" est prêt.` 
+      })
+    }
     resetForm()
   } catch (e: any) {
+    console.error("❌ Erreur lors de la sauvegarde du projet:", e);
     toast({ 
-      title: 'Erreur', 
-      description: e.message,
-      variant: 'destructive'
+      title: 'Échec de la sauvegarde ⚠️', 
+      description: e.message || 'Impossible d\'enregistrer le projet. Vérifie ta connexion.', 
+      variant: 'destructive' 
     })
-  } finally {
-    isLoading.value = false
   }
 }
 </script>

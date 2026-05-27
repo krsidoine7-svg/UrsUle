@@ -12,6 +12,9 @@ export const useTasksStore = defineStore('tasks', () => {
   const activeFilters = ref<TaskFilters>({})
   const timeSessions = ref<TimeSession[]>([])
 
+  // IDs des tâches modifiées localement → on ignore le refetch Realtime redondant
+  const _locallyUpdatedIds = new Set<string>()
+
   // Computed
   const todayTasks = computed(() => {
     const today = new Date().toDateString()
@@ -91,29 +94,37 @@ export const useTasksStore = defineStore('tasks', () => {
   }
 
   async function updateTask(id: string, dto: UpdateTaskDTO) {
-    loading.value = true
+    // ─── Optimistic update : mise à jour UI immédiate ───────────────────────
+    const previousTask = tasks.value.find(t => t.id === id)
+    if (previousTask) {
+      upsertTaskInState({ ...previousTask, ...dto } as Task, false)
+    }
+    // Signaler que cette ID est mise à jour localement pour bloquer le refetch Realtime
+    _locallyUpdatedIds.add(id)
+
     try {
       const updated = await tasksService.update(id, dto)
-      // Dédoublonnage et fusion de l'état réactif
+      // Fusionner la réponse serveur (champs calculés côté DB)
       upsertTaskInState(updated, false)
-      
+
       const webhookUrl = webhookService.getGlobalWebhookUrl()
       if (webhookUrl) {
         if (dto.status === 'done') {
-          // Lancé en arrière-plan
           webhookService.triggerWebhook(updated, 'task_completed', webhookUrl).catch(console.error)
         } else if (dto.status === 'rescheduled') {
-          // Lancé en arrière-plan
           webhookService.triggerWebhook(updated, 'task_rescheduled', webhookUrl).catch(console.error)
         }
       }
-      
+
       return updated
     } catch (e: unknown) {
+      // ─── Rollback : rétablir l'état précédent si erreur ─────────────────
+      if (previousTask) upsertTaskInState(previousTask, false)
       error.value = e instanceof Error ? e.message : String(e)
       throw e
     } finally {
-      loading.value = false
+      // Nettoyer après 2 s pour laisser le canal Realtime se stabiliser
+      setTimeout(() => _locallyUpdatedIds.delete(id), 2000)
     }
   }
 
@@ -255,6 +266,12 @@ export const useTasksStore = defineStore('tasks', () => {
         upsertTaskInState(payload.new as Task, true)
       }
     } else if (payload.eventType === 'UPDATE') {
+      // Si la mise à jour vient de ce client, on ignore le refetch Realtime redondant
+      if (_locallyUpdatedIds.has(taskId)) {
+        _locallyUpdatedIds.delete(taskId)
+        return
+      }
+      // Changement venant d'un autre client/onglet → refetch complet
       try {
         const fullTask = await tasksService.getById(taskId)
         upsertTaskInState(fullTask, false)
