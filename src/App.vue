@@ -12,6 +12,7 @@ import FocusMode from '@/components/common/FocusMode.vue'
 import { useUIStore } from '@/stores/ui.store'
 import { useTasksStore } from '@/stores/tasks.store'
 import { useProjectsStore } from '@/stores/projects.store'
+import { useNotesStore } from '@/stores/notes.store'
 import { Toaster } from '@/components/ui/toast'
 import { useToast } from '@/components/ui/toast/use-toast'
 
@@ -30,6 +31,7 @@ const showLayout = computed(() => {
 
 const tasksStore = useTasksStore()
 const projectsStore = useProjectsStore()
+const notesStore = useNotesStore()
 
 const handleValidationSuccess = () => {
   uiStore.finishValidation(true)
@@ -66,6 +68,7 @@ const handleAppreciationSelect = async (appreciation: string) => {
 
 let unsubscribeTasks: (() => void) | null = null
 let unsubscribeProjects: (() => void) | null = null
+let unsubscribeNotesAndFolders: (() => void) | null = null
 
 const handleSubscription = (isAuth: boolean) => {
   if (isAuth) {
@@ -75,6 +78,9 @@ const handleSubscription = (isAuth: boolean) => {
     if (!unsubscribeProjects) {
       unsubscribeProjects = projectsStore.subscribeToProjects()
     }
+    if (!unsubscribeNotesAndFolders) {
+      unsubscribeNotesAndFolders = notesStore.subscribeToNotesAndFolders()
+    }
   } else {
     if (unsubscribeTasks) {
       unsubscribeTasks()
@@ -83,6 +89,10 @@ const handleSubscription = (isAuth: boolean) => {
     if (unsubscribeProjects) {
       unsubscribeProjects()
       unsubscribeProjects = null
+    }
+    if (unsubscribeNotesAndFolders) {
+      unsubscribeNotesAndFolders()
+      unsubscribeNotesAndFolders = null
     }
   }
 }
@@ -94,6 +104,7 @@ watch(() => authStore.isAuthenticated, (isAuth: boolean) => {
 onUnmounted(() => {
   if (unsubscribeTasks) unsubscribeTasks()
   if (unsubscribeProjects) unsubscribeProjects()
+  if (unsubscribeNotesAndFolders) unsubscribeNotesAndFolders()
 })
 </script>
 

@@ -42,6 +42,14 @@ Ce manifeste liste de manière exhaustive toutes les compétences (skills), agen
   * Dès que l'utilisateur souhaite formaliser une nouvelle compétence réutilisable.
   * Pour optimiser la description YAML de déclenchement d'un skill via `run_loop.py`.
 
+### 🛡️ veille-securite
+* **Localisation** : `.skills/veille-securite/`
+* **Rôle** : Expert en cybersécurité, RGPD et veille technologique. Maintient le fichier `VDOS.md`.
+* **Quand l'utiliser** :
+  * Lors d'une session de veille hebdomadaire (Mardi) ou mensuelle.
+  * Pour auditer les CVE sur `npm audit`, OWASP, ANSSI, CNIL.
+  * Pour valider la conformité RGPD d'une nouvelle fonctionnalité.
+
 ---
 
 ## 🎨 3. Compétences Visuelles & Design (Tailwind, shadcn, CSS)

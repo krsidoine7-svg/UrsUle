@@ -416,15 +416,19 @@ async function onSubmit() {
     parent_task_id: form.parent_task_id || null,
   }
 
+  // Capturer le mode d'édition avant la fermeture
+  const isEditing = isEditMode.value
+  const currentTaskId = props.task?.id
+
   // 🚀 FERMETURE ET ÉMISSION IMMÉDIATE POUR EXPÉRIENCE INSTANTANÉE !
   onClose()
   emit('saved')
 
   // Exécution de l'appel réseau en arrière-plan sans bloquer l'interface
   try {
-    if (isEditMode.value) {
-      console.log("📡 Mise à jour tâche ID en arrière-plan:", props.task.id);
-      await tasksStore.updateTask(props.task.id, dto)
+    if (isEditing && currentTaskId) {
+      console.log("📡 Mise à jour tâche ID en arrière-plan:", currentTaskId);
+      await tasksStore.updateTask(currentTaskId, dto)
       toast({ 
         title: 'Tâche mise à jour ! ✨', 
         description: `"${dto.title}" a été modifiée avec succès.` 

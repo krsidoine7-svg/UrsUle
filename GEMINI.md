@@ -28,6 +28,8 @@ Le code applicatif et l'architecture frontend sont **intégralement finalisés e
 * **Statistiques (F-11)** : Rapports visuels interactifs avec Chart.js.
 * **Exports & Médias (F-12, F-13)** : PDF avec mise en page, Excel, JSON, et gestion des uploads d'images.
 * **Webhooks (F-15)** : logs de webhooks et liaisons configurées ( Make.com).
+* **Brain & PKM (F-17)** : Interface Plein Écran immersive avec panneaux latéraux et supérieurs entièrement rétractables (onglets de couleur).
+* **Graphe de Connaissances** : Implémentation de 3 modes de visualisation distincts (Tout, Libres en grille, Réseau) avec centrage dynamique et suppression du bruit visuel pour une ergonomie maximale. Code testé et prêt pour la production (build validé).
 
 ---
 

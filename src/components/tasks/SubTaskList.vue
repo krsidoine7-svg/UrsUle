@@ -304,17 +304,23 @@ const isOverdue = (dateStr: string) => {
       </div>
     </VueDraggable>
 
-    <!-- Add Subtask Button -->
-    <div class="pt-4">
+    <!-- Add Subtask Input -->
+    <div class="pt-4 flex gap-2">
+      <Input 
+        v-model="newTitle"
+        placeholder="Nouvelle sous-tâche..."
+        class="flex-1 bg-white border-neutral-200"
+        @keydown.enter.prevent="addSubtask"
+        :disabled="adding"
+      />
       <Button 
-        variant="outline" 
-        class="w-full h-14 rounded-2xl border-dashed border-2 border-neutral-200 bg-neutral-50/50 hover:bg-white hover:border-primary-200 hover:text-primary-600 transition-all group gap-2"
-        @click.stop="emit('open-form', props.parentId)"
+        @click="addSubtask"
+        :disabled="!newTitle.trim() || adding"
+        class="bg-primary-600 hover:bg-primary-700 text-white font-bold px-4 rounded-xl"
       >
-        <div class="w-8 h-8 rounded-xl bg-white border border-neutral-100 flex items-center justify-center group-hover:border-primary-100 group-hover:bg-primary-50 transition-colors">
-          <Plus class="h-5 w-5 text-neutral-400 group-hover:text-primary-600" />
-        </div>
-        <span class="font-bold text-neutral-500 group-hover:text-primary-700">Ajouter une sous-tâche</span>
+        <Loader2 v-if="adding" class="h-4 w-4 animate-spin mr-2" />
+        <Plus v-else class="h-4 w-4 mr-2" />
+        Ajouter
       </Button>
     </div>
 

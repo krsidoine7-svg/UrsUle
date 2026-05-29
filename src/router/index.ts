@@ -71,6 +71,21 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/brain',
+      component: () => import('@/views/brain/BrainView.vue'),
+      meta: { requiresAuth: true },
+      children: [
+        { path: '', redirect: '/brain/notes' },
+        { path: 'notes', name: 'brain-notes', component: () => import('@/views/brain/NoteListView.vue') },
+        { path: 'notes/:id', name: 'brain-note-detail', component: () => import('@/views/brain/NoteEditorView.vue') },
+        { path: 'graph', name: 'brain-graph', component: () => import('@/views/brain/GraphView.vue') },
+        { path: 'flashcards', name: 'brain-flashcards', component: () => import('@/views/brain/FlashcardsView.vue') },
+        { path: 'mindmap', name: 'brain-mindmap', component: () => import('@/views/brain/MindMapView.vue') },
+        { path: 'journal', name: 'brain-journal', component: () => import('@/views/brain/JournalView.vue') },
+        { path: 'trash', name: 'brain-trash', component: () => import('@/views/brain/BrainTrashView.vue') },
+      ]
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/views/NotFoundView.vue')

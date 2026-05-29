@@ -9,6 +9,7 @@ export interface Notification {
   is_read: boolean
   related_entity_id?: string
   related_entity_type?: string
+  deleted_at?: string
   created_at: string
   updated_at: string
 }

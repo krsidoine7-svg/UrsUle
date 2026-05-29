@@ -55,6 +55,7 @@ export interface TaskImage {
   filename: string
   size_bytes?: number
   mime_type?: string
+  deleted_at?: string
   created_at: string
 }
 
@@ -63,6 +64,7 @@ export interface TaskComment {
   task_id: string
   user_id: string
   content: string
+  deleted_at?: string
   created_at: string
   updated_at: string
   user?: Profile
@@ -114,6 +116,7 @@ export interface TimeSession {
   duration_minutes: number
   started_at: string
   ended_at: string
+  deleted_at?: string
   created_at: string
   task?: Partial<Task>
 }

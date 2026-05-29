@@ -20,7 +20,8 @@ import {
   ChevronRight,
   ChevronDown,
   X,
-  Trash2
+  Trash2,
+  Brain
 } from 'lucide-vue-next'
 import {
   DropdownMenu,
@@ -40,6 +41,7 @@ const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/tasks', label: 'Mes tâches', icon: CheckSquare },
   { to: '/projects', label: 'Projets', icon: FolderOpen },
+  { to: '/brain', label: 'UrsUle Brain', icon: Brain },
   { to: '/calendar', label: 'Calendrier', icon: Calendar },
   { to: '/stats', label: 'Statistiques', icon: BarChart2 },
 ]

@@ -5,6 +5,7 @@ export interface Profile {
   avatar_url?: string
   timezone: string
   preferences: Record<string, unknown>
+  deleted_at?: string
   created_at: string
   updated_at: string
 }

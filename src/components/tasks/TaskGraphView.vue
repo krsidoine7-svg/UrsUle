@@ -182,7 +182,7 @@ const configs = reactive(
   })
 )
 
-const layouts = reactive<vNG.Layouts>({
+const layouts = ref<vNG.Layouts>({
   nodes: {},
 })
 
@@ -262,7 +262,7 @@ function reorganize() {
     globalX += positionNode(t.id, 'task', globalX, verticalGap) + horizontalGap
   })
 
-  layouts.nodes = newLayouts
+  layouts.value.nodes = newLayouts
   setTimeout(() => fitContent(), 100)
 }
 
