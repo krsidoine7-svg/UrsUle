@@ -9,6 +9,7 @@ import TimerWidget from '@/components/common/TimerWidget.vue'
 import ValidationModal from '@/components/tasks/ValidationModal.vue'
 import AppreciationModal from '@/components/tasks/AppreciationModal.vue'
 import FocusMode from '@/components/common/FocusMode.vue'
+import ConsentModal from '@/components/common/ConsentModal.vue'
 import { useUIStore } from '@/stores/ui.store'
 import { useTasksStore } from '@/stores/tasks.store'
 import { useProjectsStore } from '@/stores/projects.store'
@@ -22,7 +23,7 @@ const uiStore = useUIStore()
 const { toast } = useToast()
 
 const isAuthPage = computed(() => {
-  return ['login', 'register', 'forgot-password'].includes(route.name as string)
+  return ['login', 'register', 'forgot-password', 'update-password'].includes(route.name as string)
 })
 
 const showLayout = computed(() => {
@@ -72,6 +73,10 @@ let unsubscribeNotesAndFolders: (() => void) | null = null
 
 const handleSubscription = (isAuth: boolean) => {
   if (isAuth) {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+
     if (!unsubscribeTasks) {
       unsubscribeTasks = tasksStore.subscribeToTasks()
     }
@@ -100,6 +105,23 @@ const handleSubscription = (isAuth: boolean) => {
 watch(() => authStore.isAuthenticated, (isAuth: boolean) => {
   handleSubscription(isAuth)
 }, { immediate: true })
+
+onMounted(() => {
+  // Auto-sync Google Drive si activé et connecté
+  setTimeout(async () => {
+    const autoSyncEnabled = localStorage.getItem('ursule_google_auto_sync') === 'true'
+    const { driveService } = await import('@/services/drive.service')
+    if (autoSyncEnabled && driveService.isConnected.value && driveService.googleToken.value) {
+      try {
+        console.log('☁️ Lancement de la sauvegarde automatique Google Drive...')
+        await driveService.uploadBackupToDrive()
+        console.log('☁️ Sauvegarde automatique réussie !')
+      } catch (err) {
+        console.error('☁️ Échec de la sauvegarde automatique Google Drive:', err)
+      }
+    }
+  }, 5000) // Attendre 5s que la session soit établie au démarrage
+})
 
 onUnmounted(() => {
   if (unsubscribeTasks) unsubscribeTasks()
@@ -174,6 +196,8 @@ onUnmounted(() => {
     :initial-task-id="uiStore.focusTaskId ?? undefined"
     @close="uiStore.closeFocusMode"
   />
+
+  <ConsentModal v-if="showLayout" />
 </template>
 
 <style>

@@ -57,6 +57,24 @@
                       {{ cat.name }}
                     </div>
                   </SelectItem>
+                  <div class="p-2 border-t border-neutral-100 mt-1 flex items-center gap-2" @keydown.stop @click.stop>
+                    <Input 
+                      v-model="newCategoryName" 
+                      placeholder="Nouvelle catégorie..." 
+                      class="h-8 text-xs flex-1" 
+                      @keydown.enter.prevent="handleCreateCategory" 
+                    />
+                    <Button 
+                      type="button"
+                      size="icon" 
+                      class="h-8 w-8 shrink-0 bg-primary-50 text-primary-600 hover:bg-primary-100 shadow-none border-none" 
+                      @click.prevent="handleCreateCategory" 
+                      :disabled="isCreatingCategory || !newCategoryName.trim()"
+                    >
+                      <Loader2 v-if="isCreatingCategory" class="h-3 w-3 animate-spin" />
+                      <Plus v-else class="h-4 w-4" />
+                    </Button>
+                  </div>
                 </SelectContent>
               </Select>
             </div>
@@ -99,7 +117,42 @@
                     <Calendar v-model="(deadlineDate as any)" mode="single" />
                   </PopoverContent>
                 </Popover>
-                <Input type="time" v-model="deadlineTime" class="w-32" />
+                
+                <Popover>
+                  <PopoverTrigger as-child>
+                    <Button variant="outline" class="w-32 justify-start text-left font-normal border-neutral-200">
+                      <Clock class="mr-2 h-4 w-4" />
+                      {{ deadlineTime }}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent class="w-48 p-3" align="start">
+                    <div class="flex items-center gap-2">
+                      <div class="flex-1 space-y-1">
+                        <Label class="text-xs text-neutral-500">Heure</Label>
+                        <Select v-model="deadlineHour">
+                          <SelectTrigger class="h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent class="max-h-[200px]">
+                            <SelectItem v-for="h in 24" :key="h" :value="(h-1).toString().padStart(2, '0')">
+                              {{ (h-1).toString().padStart(2, '0') }}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <span class="text-neutral-400 font-bold mt-5">:</span>
+                      <div class="flex-1 space-y-1">
+                        <Label class="text-xs text-neutral-500">Minute</Label>
+                        <Select v-model="deadlineMinute">
+                          <SelectTrigger class="h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent class="max-h-[200px]">
+                            <SelectItem v-for="m in 12" :key="m" :value="((m-1)*5).toString().padStart(2, '0')">
+                              {{ ((m-1)*5).toString().padStart(2, '0') }}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </div>
@@ -147,7 +200,7 @@
                 <Label>Épingler la tâche</Label>
                 <div class="flex items-center h-10 px-3 border border-neutral-200 rounded-md bg-neutral-50/50">
                   <span class="text-xs text-neutral-500 flex-1">Épingler en haut</span>
-                  <Switch v-model:checked="form.is_pinned" />
+                  <Switch :checked="form.is_pinned" @update:checked="form.is_pinned = $event" />
                 </div>
               </div>
             </div>
@@ -244,7 +297,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
-import { Calendar as CalendarIcon, ChevronDown, X, Loader2 } from 'lucide-vue-next'
+import { Calendar as CalendarIcon, ChevronDown, X, Loader2, Plus, Clock } from 'lucide-vue-next'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { z } from 'zod'
@@ -274,8 +327,41 @@ const { toast } = useToast()
 const loading = ref(false)
 const showOptions = ref(false)
 const tagInput = ref('')
+
+const newCategoryName = ref('')
+const isCreatingCategory = ref(false)
+
+async function handleCreateCategory() {
+  const name = newCategoryName.value.trim()
+  if (!name) return
+  isCreatingCategory.value = true
+  try {
+    const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6366F1', '#14B8A6']
+    const randomColor = colors[Math.floor(Math.random() * colors.length)]
+    const newCat = await categoriesStore.createCategory(name, randomColor, 'folder')
+    form.category_id = newCat.id
+    newCategoryName.value = ''
+    toast({ title: 'Catégorie ajoutée', description: `"${name}" est maintenant disponible.` })
+  } catch (e: any) {
+    toast({ title: 'Erreur', description: e.message, variant: 'destructive' })
+  } finally {
+    isCreatingCategory.value = false
+  }
+}
+
 const deadlineDate = ref<DateValue | undefined>(today(getLocalTimeZone()))
 const deadlineTime = ref('09:00')
+
+const deadlineHour = computed({
+  get: () => deadlineTime.value.split(':')[0],
+  set: (val) => deadlineTime.value = `${val}:${deadlineTime.value.split(':')[1]}`
+})
+
+const deadlineMinute = computed({
+  get: () => deadlineTime.value.split(':')[1],
+  set: (val) => deadlineTime.value = `${deadlineTime.value.split(':')[0]}:${val}`
+})
+
 const durationUnit = ref<'min' | 'h'>('min')
 const displayDate = computed(() => {
   if (!deadlineDate.value) return 'Choisir une date'
@@ -338,6 +424,12 @@ watch(() => props.task, (newTask) => {
     }
   } else {
     resetForm()
+  }
+}, { immediate: true })
+
+watch(() => categoriesStore.categories, (cats) => {
+  if (cats.length > 0 && !form.category_id) {
+    form.category_id = cats[0].id
   }
 }, { immediate: true })
 

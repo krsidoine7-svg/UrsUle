@@ -1,7 +1,7 @@
 # VDOS — Veille et Documentation Opérationnelle de Sécurité
 
 **Date de création :** 2026-05-29  
-**Dernière mise à jour majeure :** 2026-05-29  
+**Dernière mise à jour majeure :** 2026-06-14  
 **Fréquence de contrôle :** Hebdomadaire (Chaque Mardi) ou toutes les 5 semaines.
 
 Ce document est le registre central d'UrsUle pour la veille en cybersécurité, les audits de vulnérabilités, et l'alignement sur les normes RGPD (CNIL) et OWASP.
@@ -30,6 +30,7 @@ Ce tableau répertorie l'historique de tous les audits de sécurité exécutés 
 | Date d'Audit | Type d'Audit (Routine/Feature/Sprint) | Auditeur (Agent/Expert) | Résultat Global (Conforme / Vulnérabilités détectées) | Actions Entreprises |
 | :--- | :--- | :--- | :--- | :--- |
 | **2026-05-29** | Initialisation & Audit de démarrage | `veille-securite` | ✅ Conforme | Déploiement initial. Détection d'une faille modérée dans `vite`, résolue et patchée immédiatement par la mise à niveau vers `vite@6.4.2`. |
+| **2026-06-14** | Audit de routine | `veille-securite` | ⚠️ 3 vulnérabilités (High) | Détection d'une faille critique dans `esbuild` (GHSA-gv7w-rqvm-qjhr) impactant `vite` et `tsx`. Mise à jour requise. |
 
 ---
 
@@ -38,6 +39,7 @@ Ce tableau répertorie l'historique de tous les audits de sécurité exécutés 
 | Date de Détection | Identifiant CVE | Composant Impacté | Score CVSS / Sévérité | Statut (Ouvert/En cours/Patché) | Description & Plan de Remédiation |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **2026-05-29** | `GHSA-4w7w-66w2-5vf9` | `vite` | `5.5 (Moderate)` | `Patché` | Faille de Path Traversal dans la gestion des fichiers `.map` des dépendances optimisées. **Remédiation :** Corrigé par la mise à niveau vers `vite@6.4.2` et `@vitejs/plugin-vue@5.2.1`. Audit de contrôle propre. |
+| **2026-06-14** | `GHSA-gv7w-rqvm-qjhr` | `esbuild` (via `vite`, `tsx`) | `8.1 (High)` | `Ouvert` | Missing binary integrity verification in Deno module enables remote code execution. **Remédiation :** Mise à jour recommandée de `vite` vers la version `8.0.16` et de `tsx`. |
 
 
 

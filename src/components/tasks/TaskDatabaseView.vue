@@ -11,7 +11,8 @@ import {
   Plus,
   ArrowUp,
   ArrowDown,
-  ArrowUpDown
+  ArrowUpDown,
+  CheckCircle2
 } from 'lucide-vue-next'
 import { 
   Table, 

@@ -112,6 +112,14 @@
       <StatusBadge :status="task.status" />
       <PriorityBadge :priority="task.priority" />
       <CategoryBadge v-if="task.category" :category="task.category" />
+      <Badge 
+        v-if="task.recurrence_type && task.recurrence_type !== 'none'" 
+        variant="outline" 
+        class="border-purple-250 bg-purple-50 text-purple-700 font-extrabold text-[10px] tracking-wide uppercase px-2 py-0.5 rounded-md flex items-center gap-1"
+      >
+        <Repeat class="w-3 h-3 text-purple-600 animate-spin-slow" />
+        {{ recurrenceLabels[task.recurrence_type] || task.recurrence_type }}
+      </Badge>
     </div>
 
     <!-- Métadonnées -->
@@ -164,7 +172,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { 
-  Pin, Calendar, CheckSquare, Trash2, CheckCircle2, MoreVertical, Pencil, Copy, Archive, Play, Pause, Clock, RotateCcw
+  Pin, Calendar, CheckSquare, Trash2, CheckCircle2, MoreVertical, Pencil, Copy, Archive, Play, Pause, Clock, RotateCcw,
+  Repeat
 } from 'lucide-vue-next'
 import { 
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger 
@@ -172,6 +181,7 @@ import {
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from '@/components/ui/alert-dialog'
+import { Badge } from '@/components/ui/badge'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import PriorityBadge from '@/components/common/PriorityBadge.vue'
 import CategoryBadge from '@/components/common/CategoryBadge.vue'
@@ -292,6 +302,13 @@ const appreciationEmoji: Record<string, string> = {
   neutral: '😐',
 }
 
+const recurrenceLabels: Record<string, string> = {
+  daily: 'Quotidien',
+  weekly: 'Hebdo',
+  monthly: 'Mensuel',
+  custom: 'Perso'
+}
+
 const formatDate = (dateStr: string) => {
   return format(new Date(dateStr), 'dd MMM HH:mm', { locale: fr })
 }
@@ -300,3 +317,17 @@ const isOverdue = (dateStr: string) => {
   return isBefore(new Date(dateStr), new Date()) && props.task.status !== 'done'
 }
 </script>
+
+<style scoped>
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+</style>

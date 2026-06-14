@@ -8,6 +8,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
   const notifications = ref<Notification[]>([])
   const isLoading = ref(false)
   const authStore = useAuthStore()
+  let currentChannel: any = null
 
   const unreadCount = computed(() => {
     return notifications.value.filter(n => !n.is_read).length
@@ -122,8 +123,11 @@ export const useNotificationsStore = defineStore('notifications', () => {
   // Set up realtime subscription
   function subscribeToNotifications() {
     if (!authStore.user) return null
+    
+    // Éviter les abonnements multiples
+    if (currentChannel) return currentChannel
 
-    return supabase
+    currentChannel = supabase
       .channel('notifications_changes')
       .on(
         'postgres_changes',
@@ -137,6 +141,14 @@ export const useNotificationsStore = defineStore('notifications', () => {
           if (payload.eventType === 'INSERT') {
             const newNotif = payload.new as Notification
             notifications.value.unshift(newNotif)
+
+            // Déclencher la notification native du navigateur
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification(newNotif.title, {
+                body: newNotif.message,
+                icon: '/favicon.ico'
+              })
+            }
           } else if (payload.eventType === 'UPDATE') {
             const updatedNotif = payload.new as Notification
             const index = notifications.value.findIndex(n => n.id === updatedNotif.id)

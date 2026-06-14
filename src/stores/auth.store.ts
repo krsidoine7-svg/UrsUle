@@ -15,15 +15,23 @@ export const useAuthStore = defineStore('auth', () => {
     const { data: { session } } = await supabase.auth.getSession()
     if (session?.user) {
       await fetchProfile(session.user.id)
+      const { driveService } = await import('@/services/drive.service')
+      driveService.saveTokenFromSession(session)
     }
     loading.value = false
 
     supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        await fetchProfile(session.user.id)
+        if (user.value?.id !== session.user.id) {
+          await fetchProfile(session.user.id)
+        }
+        const { driveService } = await import('@/services/drive.service')
+        driveService.saveTokenFromSession(session)
       }
       if (event === 'SIGNED_OUT') {
         user.value = null
+        const { driveService } = await import('@/services/drive.service')
+        driveService.disconnectGoogle()
       }
     })
   }
@@ -50,8 +58,14 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function signIn(email: string, password: string) {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw new Error('Email ou mot de passe incorrect')
+    
+    // Attendre le chargement du profil AVANT de résoudre la connexion
+    // pour garantir que la redirection vers le dashboard a les bonnes données
+    if (data?.session?.user) {
+      await fetchProfile(data.session.user.id)
+    }
   }
 
   async function signUp(email: string, password: string, fullName: string) {

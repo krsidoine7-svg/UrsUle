@@ -88,6 +88,7 @@ Ce qu'on faisait, le point de départ de la session.
 - ✅ Les questions posées et réponses obtenues
 - ✅ Les changements de cap ou de priorité
 - ✅ Les outils ou packages ajoutés ou abandonnés
+information 
 
 ### Ce qu'on N'enregistre JAMAIS (données sensibles)
 Les données sensibles sont **masquées automatiquement** avant tout enregistrement :

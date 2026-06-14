@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Lock } from 'lucide-vue-next'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Loader2, Lock, AlertCircle } from 'lucide-vue-next'
 import { useToast } from '@/components/ui/toast/use-toast'
 
 const router = useRouter()
@@ -67,11 +67,24 @@ async function handleUpdate() {
       
       <CardContent class="px-8 pb-8">
         <form @submit.prevent="handleUpdate" class="space-y-5">
-          <div v-if="error">
-            <Alert variant="destructive" class="bg-red-50 border-red-100 text-red-600 rounded-2xl">
-              <AlertDescription class="font-bold">{{ error }}</AlertDescription>
-            </Alert>
-          </div>
+          <Transition
+            enter-active-class="transition-all duration-300 ease-out"
+            enter-from-class="opacity-0 -translate-y-2 scale-95"
+            enter-to-class="opacity-100 translate-y-0 scale-100"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="opacity-100 translate-y-0 scale-100"
+            leave-to-class="opacity-0 -translate-y-2 scale-95"
+          >
+            <div v-if="error" class="mb-4">
+              <Alert variant="destructive" class="border-red-200 bg-red-50/50 text-red-900 shadow-sm backdrop-blur-sm rounded-2xl">
+                <AlertCircle class="h-4 w-4 !text-red-600" />
+                <AlertTitle class="font-semibold text-red-800">Oups !</AlertTitle>
+                <AlertDescription class="text-red-700/90 text-sm leading-relaxed mt-1">
+                  {{ error }}
+                </AlertDescription>
+              </Alert>
+            </div>
+          </Transition>
 
           <div class="space-y-2">
             <Label for="password" class="text-xs font-black uppercase tracking-widest text-neutral-400">Nouveau mot de passe</Label>

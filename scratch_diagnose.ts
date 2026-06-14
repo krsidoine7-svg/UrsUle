@@ -53,12 +53,75 @@ async function runDiagnostics() {
       .limit(5)
     
     if (profError) {
-      console.error('❌ Erreur profils :', profError)
+      console.error('❌ Erreur profils :', profError.message)
     } else {
-      console.log('✅ Profils trouvés :', profiles)
+      console.log('✅ Profils trouvés (avec RLS) :', profiles)
     }
   } catch (e) {
     console.error('❌ Exception profils :', e)
+  }
+
+  // Tenter de lister les flashcards (pour vérifier l'existence de la table)
+  console.log('\n--- 3.1 Vérification de la table flashcards ---')
+  try {
+    const { data: flashcards, error: flashError } = await supabase
+      .from('flashcards')
+      .select('*')
+      .limit(1)
+    
+    if (flashError) {
+      console.error('❌ Erreur flashcards :', flashError.message)
+    } else {
+      console.log('✅ Table flashcards existe ! (avec RLS) :', flashcards)
+    }
+  } catch (e) {
+    console.error('❌ Exception flashcards :', e)
+  }
+
+  // Tenter de lister les notes (pour vérifier l'existence de la table)
+  console.log('\n--- 3.2 Vérification de la table notes ---')
+  try {
+    const { data: notes, error: notesError } = await supabase
+      .from('notes')
+      .select('*')
+      .limit(1)
+    
+    if (notesError) {
+      console.error('❌ Erreur notes :', notesError.message)
+    } else {
+      console.log('✅ Table notes existe ! (avec RLS) :', notes)
+    }
+  } catch (e) {
+    console.error('❌ Exception notes :', e)
+  }
+
+  // Tenter de lister les notifications (pour vérifier l'existence de la table)
+  console.log('\n--- 3.3 Vérification de la table notifications ---')
+  try {
+    const { data: notifications, error: notifError } = await supabase
+      .from('notifications')
+      .select('*')
+      .limit(1)
+    
+    if (notifError) {
+      console.error('❌ Erreur notifications :', notifError.message)
+    } else {
+      console.log('✅ Table notifications existe ! (avec RLS) :', notifications)
+    }
+  } catch (e) {
+    console.error('❌ Exception notifications :', e)
+  }
+
+  console.log('\n--- 4. Vérification du bucket de stockage task-attachments ---')
+  try {
+    const { data: bucket, error: bucketError } = await supabase.storage.getBucket('task-attachments')
+    if (bucketError) {
+      console.error('❌ Erreur bucket task-attachments :', bucketError.message)
+    } else {
+      console.log('✅ Bucket task-attachments trouvé !', bucket)
+    }
+  } catch (e) {
+    console.error('❌ Exception bucket :', e)
   }
 }
 

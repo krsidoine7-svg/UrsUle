@@ -17,6 +17,7 @@ import tippy from 'tippy.js'
 import MentionList from './MentionList.vue'
 import { common, createLowlight } from 'lowlight'
 import { useNotesStore } from '@/stores/notes.store'
+import { sanitizeHtml } from '@/utils/sanitize'
 import {
   Bold, Italic, Strikethrough, Heading1, Heading2, Heading3,
   List, ListOrdered, CheckSquare, Code, Link as LinkIcon, Hash,
@@ -70,7 +71,7 @@ const editor = useEditor({
       },
       suggestion: {
         char: '//',
-        items: ({ query }) => {
+        items: ({ query }: { query: string }) => {
           return notesStore.notes
             .filter(item => item.title.toLowerCase().includes(query.toLowerCase()))
             .slice(0, 5)
@@ -80,7 +81,7 @@ const editor = useEditor({
           let popup: any
 
           return {
-            onStart: props => {
+            onStart: (props: any) => {
               component = new VueRenderer(MentionList, {
                 props,
                 editor: props.editor,
@@ -102,7 +103,7 @@ const editor = useEditor({
               })
             },
 
-            onUpdate(props) {
+            onUpdate(props: any) {
               component.updateProps(props)
 
               if (!props.clientRect) {
@@ -114,7 +115,7 @@ const editor = useEditor({
               })
             },
 
-            onKeyDown(props) {
+            onKeyDown(props: any) {
               if (props.event.key === 'Escape') {
                 popup[0].hide()
                 return true
@@ -138,7 +139,7 @@ const editor = useEditor({
     TagMention.configure({
       suggestion: {
         char: '#',
-        items: ({ query }) => {
+        items: ({ query }: { query: string }) => {
           return [] // Auto-complétion des tags (optionnel)
         }
       }
@@ -146,7 +147,7 @@ const editor = useEditor({
   ],
   onUpdate: ({ editor }) => {
     emit('update:jsonValue', editor.getJSON())
-    emit('update:modelValue', editor.getHTML()) // Ou getHTML(), ou utiliser tiptap-markdown pour le markdown brut
+    emit('update:modelValue', sanitizeHtml(editor.getHTML())) 
     
     // Auto-save logic
     debouncedSave()

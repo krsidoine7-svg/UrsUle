@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, CheckCircle2 } from 'lucide-vue-next'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-vue-next'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -102,11 +102,24 @@ async function handleRegister() {
         </div>
 
         <form v-else @submit.prevent="handleRegister" class="space-y-4">
-          <div v-if="error" class="mb-4">
-            <Alert variant="destructive">
-              <AlertDescription>{{ error }}</AlertDescription>
-            </Alert>
-          </div>
+          <Transition
+            enter-active-class="transition-all duration-300 ease-out"
+            enter-from-class="opacity-0 -translate-y-2 scale-95"
+            enter-to-class="opacity-100 translate-y-0 scale-100"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="opacity-100 translate-y-0 scale-100"
+            leave-to-class="opacity-0 -translate-y-2 scale-95"
+          >
+            <div v-if="error" class="mb-4">
+              <Alert variant="destructive" class="border-red-200 bg-red-50/50 text-red-900 shadow-sm backdrop-blur-sm">
+                <AlertCircle class="h-4 w-4 !text-red-600" />
+                <AlertTitle class="font-semibold text-red-800">Oups !</AlertTitle>
+                <AlertDescription class="text-red-700/90 text-sm leading-relaxed mt-1">
+                  {{ error }}
+                </AlertDescription>
+              </Alert>
+            </div>
+          </Transition>
 
           <div class="space-y-2">
             <Label for="fullName">Nom complet</Label>

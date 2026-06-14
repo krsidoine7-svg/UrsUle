@@ -5,6 +5,8 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import { useUIStore } from '@/stores/ui.store'
 import { useNotificationsStore } from '@/stores/notifications.store'
+import { useTasksStore } from '@/stores/tasks.store'
+import { tasksService } from '@/services/tasks.service'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Plus, Bell, Search, Menu, User, Settings, LogOut, ChevronRight, Zap } from 'lucide-vue-next'
@@ -26,9 +28,62 @@ const authStore = useAuthStore()
 const uiStore = useUIStore()
 const projectsStore = useProjectsStore()
 const notificationsStore = useNotificationsStore()
+const tasksStore = useTasksStore()
 const route = useRoute()
 const router = useRouter()
 const { toast } = useToast()
+
+const handleNotificationClick = async (notif: any) => {
+  try {
+    // 1. Marquer la notification comme lue si nécessaire
+    if (!notif.is_read) {
+      await notificationsStore.markAsRead(notif.id)
+    }
+
+    // 2. Action contextuelle selon le type
+    if (notif.related_entity_type === 'task' && notif.related_entity_id) {
+      // Récupérer la tâche dans le store ou depuis le service
+      let task = tasksStore.tasks.find((t: any) => t.id === notif.related_entity_id)
+      if (!task) {
+        task = await tasksService.getById(notif.related_entity_id)
+      }
+
+      if (task) {
+        uiStore.openTaskForm(task)
+      }
+
+      if (route.path !== '/tasks') {
+        await router.push('/tasks')
+      }
+
+      toast({
+        title: 'Tâche chargée 📝',
+        description: `Ouverture de la tâche : "${task?.title || ''}"`
+      })
+    } else if (notif.related_entity_type === 'project' && notif.related_entity_id) {
+      await router.push(`/projects/${notif.related_entity_id}`)
+      toast({
+        title: 'Projet chargé 📂',
+        description: 'Navigation vers le projet correspondant.'
+      })
+    } else {
+      // Bilan du jour ou notification générale : rediriger vers le tableau de bord
+      if (route.path !== '/') {
+        await router.push('/')
+      }
+      toast({
+        title: notif.title || 'Notification',
+        description: notif.message
+      })
+    }
+  } catch (err) {
+    console.error('Erreur lors du clic sur la notification:', err)
+    // Redirection de secours vers les tâches en cas d'erreur
+    if (route.path !== '/tasks') {
+      await router.push('/tasks')
+    }
+  }
+}
 
 onMounted(() => {
   notificationsStore.fetchNotifications()
@@ -162,27 +217,31 @@ const handleLogout = async () => {
               <div v-if="notificationsStore.notifications.length === 0" class="p-4 text-center text-sm text-neutral-500">
                 Aucune notification pour le moment.
               </div>
-              <div 
+              <DropdownMenuItem 
                 v-for="notif in notificationsStore.notifications" 
                 :key="notif.id"
-                class="p-4 border-b border-neutral-50 hover:bg-neutral-50 transition-colors cursor-pointer"
-                :class="{ 'bg-primary-50/30': !notif.is_read }"
-                @click="notificationsStore.markAsRead(notif.id)"
+                as-child
               >
-                <div class="flex gap-3">
-                  <div class="mt-1">
-                    <div v-if="notif.type === 'info'" class="h-2 w-2 rounded-full bg-blue-500"></div>
-                    <div v-else-if="notif.type === 'success'" class="h-2 w-2 rounded-full bg-green-500"></div>
-                    <div v-else-if="notif.type === 'warning'" class="h-2 w-2 rounded-full bg-orange-500"></div>
-                    <div v-else-if="notif.type === 'error'" class="h-2 w-2 rounded-full bg-red-500"></div>
-                  </div>
-                  <div class="flex-1 space-y-1">
-                    <p class="text-sm font-medium leading-none text-neutral-900">{{ notif.title }}</p>
-                    <p class="text-xs text-neutral-500 mt-1">{{ notif.message }}</p>
-                    <p class="text-[10px] text-neutral-400 mt-2">{{ formatTimeAgo(notif.created_at) }}</p>
+                <div 
+                  class="p-4 border-b border-neutral-50 hover:bg-neutral-50 transition-colors cursor-pointer outline-none select-none"
+                  :class="{ 'bg-primary-50/30': !notif.is_read }"
+                  @click="handleNotificationClick(notif)"
+                >
+                  <div class="flex gap-3">
+                    <div class="mt-1">
+                      <div v-if="notif.type === 'info'" class="h-2 w-2 rounded-full bg-blue-500"></div>
+                      <div v-else-if="notif.type === 'success'" class="h-2 w-2 rounded-full bg-green-500"></div>
+                      <div v-else-if="notif.type === 'warning'" class="h-2 w-2 rounded-full bg-orange-500"></div>
+                      <div v-else-if="notif.type === 'error'" class="h-2 w-2 rounded-full bg-red-500"></div>
+                    </div>
+                    <div class="flex-1 space-y-1">
+                      <p class="text-sm font-medium leading-none text-neutral-900">{{ notif.title }}</p>
+                      <p class="text-xs text-neutral-500 mt-1">{{ notif.message }}</p>
+                      <p class="text-[10px] text-neutral-400 mt-2">{{ formatTimeAgo(notif.created_at) }}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </DropdownMenuItem>
             </div>
           </DropdownMenuContent>
         </DropdownMenu>

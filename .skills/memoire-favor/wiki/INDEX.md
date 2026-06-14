@@ -108,6 +108,7 @@ Date | Décision | Contexte | Raison | Alternative rejetée | Liens
 |---|---|
 | `sessions/2026-05-10.md` | Session 001 — Setup projet + documentation |
 | `sessions/2026-05-29.md` | Session du 2026-05-29 — Graphe de connaissances Zen Mode, Veille Sécurite V5 et correctif faille Vite |
+| `sessions/2026-06-14.md` | Session du 2026-06-14 — Audit de sécurité total (RLS, XSS, SSRF, Storage) |
 | *(à compléter au fil des sessions)* | |
 
 **Relations :** Chaque résumé de session pointe vers le fichier fourtour correspondant.

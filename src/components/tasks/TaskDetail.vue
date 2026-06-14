@@ -9,11 +9,13 @@
               <button 
                 v-if="currentTask.parent_task_id" 
                 @click="goToParent"
-                class="flex items-center gap-1 text-[10px] font-bold text-primary-600 uppercase hover:underline"
+                class="flex items-center gap-1 text-[10px] font-bold text-primary-600 uppercase hover:underline max-w-[250px]"
+                :title="parentTaskTitle ? 'Retour vers: ' + parentTaskTitle : 'Retour au parent'"
               >
-                <ArrowLeft class="h-3 w-3" /> Retour au parent
+                <ArrowLeft class="h-3 w-3 shrink-0" />
+                <span class="truncate">Parent : {{ parentTaskTitle || 'Chargement...' }}</span>
               </button>
-              <CategoryBadge v-if="currentTask.category" :category="currentTask.category" />
+              <CategoryBadge v-if="currentTask.category && !currentTask.parent_task_id" :category="currentTask.category" />
             </div>
             <div class="flex gap-2 pr-10">
               <template v-if="!currentTask.deleted_at">
@@ -324,6 +326,12 @@ function onOpenSubtaskForm(parentId: string) {
 const currentTask = computed(() => 
   props.task ? tasksStore.tasks.find(t => t.id === props.task!.id) || props.task : null
 )
+
+const parentTaskTitle = computed(() => {
+  if (!currentTask.value?.parent_task_id) return ''
+  const parent = tasksStore.tasks.find(t => t.id === currentTask.value!.parent_task_id)
+  return parent?.title || ''
+})
 
 const taskImages = ref<any[]>([])
 const isUploadingImage = ref(false)

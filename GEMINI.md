@@ -28,32 +28,44 @@ Le code applicatif et l'architecture frontend sont **intégralement finalisés e
 * **Statistiques (F-11)** : Rapports visuels interactifs avec Chart.js.
 * **Exports & Médias (F-12, F-13)** : PDF avec mise en page, Excel, JSON, et gestion des uploads d'images.
 * **Webhooks (F-15)** : logs de webhooks et liaisons configurées ( Make.com).
+* **Google Drive Sync (F-14)** : Connexion OAuth Google, sauvegarde JSON (tâches, projets, PKM) et restauration fonctionnelles.
 * **Brain & PKM (F-17)** : Interface Plein Écran immersive avec panneaux latéraux et supérieurs entièrement rétractables (onglets de couleur).
 * **Graphe de Connaissances** : Implémentation de 3 modes de visualisation distincts (Tout, Libres en grille, Réseau) avec centrage dynamique et suppression du bruit visuel pour une ergonomie maximale. Code testé et prêt pour la production (build validé).
+* **Sécurité & Audit (Production Ready)** : Faille SSRF patchée sur l'Edge Function, protection XSS renforcée sur l'éditeur Tiptap (`DOMPurify`), durcissement du Row Level Security (RLS) sur toutes les tables secondaires, correction des vulnérabilités de `search_path` (Security Definer), et automatisation sécurisée du bucket Storage.
 
 ---
 
 ## 🔑 Configuration & Base de Données
 ### Variables d'Environnement
-Le fichier [`.env.local`](file:///c:/Users/Toto.ADMINISTRATOR/Desktop/UrsUle-main/.env.local) est à jour avec les informations de votre nouveau projet Supabase actif :
+Le fichier [`.env.local`](.env.local) est à jour avec les informations de votre nouveau projet Supabase actif :
 * **Supabase URL** : `https://xptwxsuqjnlwjrzytvpj.supabase.co`
 * **Supabase Anon / Publishable Key** : `sb_publishable_1JNYtHEEUbA84q46N1NkPQ_3W48qbVS`
 
 ### Initialisation de la Base de Données
 Pour faire fonctionner le projet, le schéma doit être appliqué sur votre nouveau projet Supabase. Les fichiers SQL sont tous prêts dans le dossier :
-📂 [`supabase/migrations/`](file:///c:/Users/Toto.ADMINISTRATOR/Desktop/UrsUle-main/supabase/migrations)
+📂 [`supabase/migrations/`](supabase/migrations/)
 
 **Ordre d'exécution recommandé dans le SQL Editor de Supabase** :
-1. [`001_init_schema.sql`](file:///c:/Users/Toto.ADMINISTRATOR/Desktop/UrsUle-main/supabase/migrations/001_init_schema.sql) (Création des tables, indexes et du trigger d'inscription automatique)
-2. [`002_rls_policies.sql`](file:///c:/Users/Toto.ADMINISTRATOR/Desktop/UrsUle-main/supabase/migrations/002_rls_policies.sql) (Règles RLS)
-3. [`003_default_categories.sql`](file:///c:/Users/Toto.ADMINISTRATOR/Desktop/UrsUle-main/supabase/migrations/003_default_categories.sql) (Données des catégories initiales)
-4. [`004_security_hardening.sql`](file:///c:/Users/Toto.ADMINISTRATOR/Desktop/UrsUle-main/supabase/migrations/004_security_hardening.sql) (Durcissement sécurité)
-5. [`005_default_user_id.sql`](file:///c:/Users/Toto.ADMINISTRATOR/Desktop/UrsUle-main/supabase/migrations/005_default_user_id.sql)
-6. [`006_task_sort_order.sql`](file:///c:/Users/Toto.ADMINISTRATOR/Desktop/UrsUle-main/supabase/migrations/006_task_sort_order.sql)
-7. [`007_notifications.sql`](file:///c:/Users/Toto.ADMINISTRATOR/Desktop/UrsUle-main/supabase/migrations/007_notifications.sql)
-8. [`008_webhook_logs.sql`](file:///c:/Users/Toto.ADMINISTRATOR/Desktop/UrsUle-main/supabase/migrations/008_webhook_logs.sql)
-9. [`009_sync_webhook_logs.sql`](file:///c:/Users/Toto.ADMINISTRATOR/Desktop/UrsUle-main/supabase/migrations/009_sync_webhook_logs.sql)
-10. [`010_enable_realtime.sql`](file:///c:/Users/Toto.ADMINISTRATOR/Desktop/UrsUle-main/supabase/migrations/010_enable_realtime.sql) (Activation de Supabase Realtime pour la synchronisation automatique)
+1. [`001_init_schema.sql`](supabase/migrations/001_init_schema.sql) (Création des tables, indexes et du trigger d'inscription automatique)
+2. [`002_rls_policies.sql`](supabase/migrations/002_rls_policies.sql) (Règles RLS)
+3. [`003_default_categories.sql`](supabase/migrations/003_default_categories.sql) (Données des catégories initiales)
+4. [`004_security_hardening.sql`](supabase/migrations/004_security_hardening.sql) (Durcissement sécurité)
+5. [`005_default_user_id.sql`](supabase/migrations/005_default_user_id.sql)
+6. [`006_task_sort_order.sql`](supabase/migrations/006_task_sort_order.sql)
+7. [`007_notifications.sql`](supabase/migrations/007_notifications.sql)
+8. [`008_webhook_logs.sql`](supabase/migrations/008_webhook_logs.sql)
+9. [`009_sync_webhook_logs.sql`](supabase/migrations/009_sync_webhook_logs.sql)
+10. [`010_enable_realtime.sql`](supabase/migrations/010_enable_realtime.sql) (Activation de Supabase Realtime pour la synchronisation automatique)
+11. [`011_project_soft_delete_and_indexes.sql`](supabase/migrations/011_project_soft_delete_and_indexes.sql)
+12. [`012_brain_schema.sql`](supabase/migrations/012_brain_schema.sql)
+13. [`013_soft_delete_folders_flashcards.sql`](supabase/migrations/013_soft_delete_folders_flashcards.sql)
+14. [`014_soft_delete_all_secondary_tables.sql`](supabase/migrations/014_soft_delete_all_secondary_tables.sql)
+15. [`015_task_recurrence_trigger.sql`](supabase/migrations/015_task_recurrence_trigger.sql) (Gestion de la récurrence automatique des tâches)
+16. [`016_automated_notifications.sql`](supabase/migrations/016_automated_notifications.sql) (Planification des notifications automatiques et digest journalier via pg_cron)
+17. Edge Function `webhook-dispatcher` déployée et active (Sécurisée contre SSRF).
+18. [`018_rls_audit_fixes.sql`](supabase/migrations/018_rls_audit_fixes.sql) (Verrouillage final RLS sur les tables secondaires et désactivation de l'accès public).
+19. [`019_search_path_fixes.sql`](supabase/migrations/019_search_path_fixes.sql) (Protection des fonctions *Security Definer* contre les injections de Search Path).
+20. [`020_storage_security.sql`](supabase/migrations/020_storage_security.sql) (Création et sécurisation stricte du bucket `task-attachments` via RLS).
 
 ---
 
@@ -71,7 +83,7 @@ Pour faire fonctionner le projet, le schéma doit être appliqué sur votre nouv
 ---
 
 ## 📋 Prochaines Actions suggérées
-- [ ] Exécuter les scripts de migrations SQL de `001` à `010` sur la console Supabase (SQL Editor).
+- [ ] Exécuter **l'intégralité des scripts de migrations SQL** de `001` à `020` sur la console Supabase (SQL Editor) si vous repartez d'un projet vierge.
 - [ ] Tester l'inscription d'un nouvel utilisateur depuis l'interface locale.
-- [ ] Configurer un seau (bucket) public nommé `task-images` dans le menu **Storage** du tableau de bord Supabase pour activer la gestion des images.
+- [x] Configurer un seau (bucket) public nommé `task-attachments` dans le menu **Storage** du tableau de bord Supabase pour activer la gestion des images (Automatisé via la migration `020_storage_security.sql`).
 

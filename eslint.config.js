@@ -8,16 +8,17 @@ export default [
   },
 
   {
-    name: 'app/files-to-ignore',
     ignores: [
       '**/dist/**', 
       '**/dist-ssr/**', 
       '**/coverage/**', 
       '**/node_modules/**',
+      '**/.venv/**',
       'public/**',
       '*.config.js',
       '*.config.ts',
-      'eslint.config.js'
+      'eslint.config.js',
+      'test_subtask.ts'
     ],
   },
 

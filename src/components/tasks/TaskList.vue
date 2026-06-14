@@ -49,7 +49,16 @@
             </TableCell>
             <TableCell class="font-medium text-neutral-800">
               <div class="flex flex-col gap-1">
-                <span>{{ task.title }}</span>
+                <div class="flex items-center gap-1.5">
+                  <span>{{ task.title }}</span>
+                  <span 
+                    v-if="task.recurrence_type && task.recurrence_type !== 'none'"
+                    class="p-0.5 rounded text-purple-600 bg-purple-50 border border-purple-100 hover:bg-purple-100 transition-colors"
+                    :title="`Tâche récurrente : ${recurrenceLabels[task.recurrence_type] || task.recurrence_type}`"
+                  >
+                    <Repeat class="w-3 h-3" />
+                  </span>
+                </div>
                 <div v-if="getSubtasks(task.id).length" class="flex items-center gap-2">
                   <div class="w-16 h-1 bg-neutral-100 rounded-full overflow-hidden">
                     <div 
@@ -198,7 +207,7 @@ import {
 
 import { 
   MoreHorizontal, Pin, Pencil, Copy, Archive, Trash2, ArrowUpDown, RotateCcw,
-  Eye
+  Eye, Repeat
 } from 'lucide-vue-next'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import PriorityBadge from '@/components/common/PriorityBadge.vue'
@@ -218,6 +227,13 @@ const appreciationEmoji: Record<string, string> = {
   stressful: '😰',
   enriching: '💡',
   neutral: '😐',
+}
+
+const recurrenceLabels: Record<string, string> = {
+  daily: 'Quotidien',
+  weekly: 'Hebdo',
+  monthly: 'Mensuel',
+  custom: 'Perso'
 }
 
 const props = defineProps<{

@@ -119,3 +119,21 @@ export async function createClient() {
 ---
 
 *Ajouter ici chaque erreur Supabase rencontrée et résolue.*
+
+---
+
+## [ERR-SUP-003] `must be owner of table objects` lors d'un ALTER TABLE
+
+**Symptôme :** Erreur SQL `42501: must be owner of table objects` lors de l'exécution d'une migration Supabase.  
+**Cause :** La table système `storage.objects` n'appartient pas au rôle exécutant les migrations SQL classiques. Tenter d'y exécuter `ALTER TABLE` déclenche une erreur de droits.  
+**Solution :**
+Puisque le Row Level Security (RLS) est toujours activé par défaut sur les buckets Supabase, la commande d'activation globale n'est pas requise.
+```sql
+-- ❌ Inutile et lève une erreur :
+-- ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+
+-- ✅ Correct : Créer directement les policies
+CREATE POLICY "ma_policy" ON storage.objects FOR SELECT ...
+```
+**Référence fourtour :** [2026-06-14_session-audit.md](../../fourtour/2026-06-14_session-audit.md)
+
