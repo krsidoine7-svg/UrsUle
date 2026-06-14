@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
+import { useAppConfigStore } from '@/stores/appConfig.store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,6 +12,9 @@ import { Loader2, CheckCircle2, AlertCircle } from 'lucide-vue-next'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const appConfigStore = useAppConfigStore()
+
+appConfigStore.fetchConfig()
 
 const fullName = ref('')
 const email = ref('')
@@ -79,7 +83,7 @@ async function handleRegister() {
 <template>
   <div class="min-h-screen flex flex-col items-center justify-center bg-neutral-50 p-4">
     <div class="mb-8 text-center">
-      <h1 class="text-4xl font-bold text-primary-600 font-display">UrsUle</h1>
+      <h1 class="text-4xl font-bold text-primary-600 font-display">{{ appConfigStore.config.app_name }}</h1>
     </div>
 
     <Card class="w-full max-w-md">

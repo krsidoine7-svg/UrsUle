@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
+import { useAppConfigStore } from '@/stores/appConfig.store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,6 +12,10 @@ import { Loader2, Github, Mail, MessageCircle, ExternalLink } from 'lucide-vue-n
 
 const router = useRouter()
 const authStore = useAuthStore()
+const appConfigStore = useAppConfigStore()
+
+// Charger la configuration de marque dès le montage (ou récupérer depuis le cache)
+appConfigStore.fetchConfig()
 
 const email = ref('')
 const password = ref('')
@@ -46,26 +51,26 @@ async function handleLogin() {
 
       <!-- Header -->
       <div class="relative z-10">
-        <h1 class="text-5xl font-display font-black tracking-tight">UrsUle</h1>
+        <h1 class="text-5xl font-display font-black tracking-tight">{{ appConfigStore.config.app_name }}</h1>
         <p class="text-white/70 mt-3 text-lg font-medium leading-relaxed max-w-sm">
-          Le gestionnaire de tâches premium pour les jeunes entrepreneurs ambitieux.
+          {{ appConfigStore.config.app_subtitle }}
         </p>
       </div>
 
       <!-- Citation -->
       <div class="relative z-10">
         <blockquote class="border-l-4 border-white/30 pl-5 text-white/80 italic text-sm leading-relaxed">
-          « Chaque grande réussite commence par la décision d'essayer. »
+          {{ appConfigStore.config.quote }}
         </blockquote>
       </div>
 
       <!-- Contact -->
       <div class="relative z-10 space-y-5">
-        <p class="text-xs font-bold uppercase tracking-widest text-white/50">Créé par Krsidoine</p>
+        <p class="text-xs font-bold uppercase tracking-widest text-white/50">Créé par {{ appConfigStore.config.author_name }}</p>
         
         <div class="space-y-2.5">
           <a 
-            href="https://github.com/krsidoine7-svg/UrsUle" 
+            :href="appConfigStore.config.github_url" 
             target="_blank"
             class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all group"
           >
@@ -74,12 +79,12 @@ async function handleLogin() {
             </div>
             <div>
               <span class="text-sm font-bold block">GitHub</span>
-              <span class="text-[11px] text-white/60">krsidoine7-svg/UrsUle</span>
+              <span class="text-[11px] text-white/60">{{ appConfigStore.config.github_text }}</span>
             </div>
           </a>
 
           <a 
-            href="mailto:krsidoine7@gmail.com?subject=Contact%20depuis%20UrsUle&body=Bonjour%20Krsidoine%2C%0A%0AJe%20vous%20contacte%20depuis%20l'application%20UrsUle.%0A%0A"
+            :href="appConfigStore.config.email_url"
             class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all group"
           >
             <div class="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center group-hover:bg-white/25 transition-colors shrink-0">
@@ -87,12 +92,12 @@ async function handleLogin() {
             </div>
             <div>
               <span class="text-sm font-bold block">Email</span>
-              <span class="text-[11px] text-white/60">krsidoine7@gmail.com</span>
+              <span class="text-[11px] text-white/60">{{ appConfigStore.config.email_text }}</span>
             </div>
           </a>
 
           <a 
-            href="https://wa.me/2250503681588?text=Bonjour%20Krsidoine%20%F0%9F%91%8B%20Je%20vous%20contacte%20depuis%20l'application%20UrsUle."
+            :href="appConfigStore.config.whatsapp_url"
             target="_blank"
             class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all group"
           >
@@ -101,7 +106,7 @@ async function handleLogin() {
             </div>
             <div>
               <span class="text-sm font-bold block">WhatsApp</span>
-              <span class="text-[11px] text-white/60">+225 05 03 68 15 88</span>
+              <span class="text-[11px] text-white/60">{{ appConfigStore.config.whatsapp_text }}</span>
             </div>
           </a>
         </div>
@@ -112,29 +117,20 @@ async function handleLogin() {
             <ExternalLink class="h-3 w-3" /> Mes réalisations
           </p>
           <div class="flex flex-wrap gap-2">
-            <a href="https://ofika.ci/" target="_blank" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/25 text-[11px] font-bold text-white/80 hover:text-white transition-all">
-              Ofika.ci
-            </a>
-            <a href="https://orla-nou.vercel.app/" target="_blank" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/25 text-[11px] font-bold text-white/80 hover:text-white transition-all">
-              Orla-nou
-            </a>
-            <a href="https://manly-chi.vercel.app/" target="_blank" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/25 text-[11px] font-bold text-white/80 hover:text-white transition-all">
-              Menlyla.ci
-            </a>
-            <a href="https://manly-chi.vercel.app/ofika-gournet" target="_blank" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/25 text-[11px] font-bold text-white/80 hover:text-white transition-all">
-              Ofika Gourmet - Menu Digital
-            </a>
-            <a href="https://ofika.ci/krsidoine7" target="_blank" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/25 text-[11px] font-bold text-white/80 hover:text-white transition-all">
-              Portfolio
-            </a>
-            <a href="https://sign-ofika.vercel.app/" target="_blank" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/25 text-[11px] font-bold text-white/80 hover:text-white transition-all">
-              Sign Ofika
+            <a 
+              v-for="(link, i) in appConfigStore.config.portfolio_links" 
+              :key="i"
+              :href="link.url" 
+              target="_blank" 
+              class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/25 text-[11px] font-bold text-white/80 hover:text-white transition-all"
+            >
+              {{ link.label }}
             </a>
           </div>
         </div>
 
         <p class="text-[10px] text-white/30 font-medium pt-1">
-          © 2026 UrsUle — Tous droits réservés
+          {{ appConfigStore.config.copyright }}
         </p>
       </div>
     </div>
@@ -142,7 +138,7 @@ async function handleLogin() {
     <!-- Côté Droit — Formulaire -->
     <div class="flex-1 flex flex-col items-center justify-center p-4 sm:p-8">
       <div class="mb-8 text-center lg:hidden">
-        <h1 class="text-4xl font-bold text-primary-600 font-display">UrsUle</h1>
+        <h1 class="text-4xl font-bold text-primary-600 font-display">{{ appConfigStore.config.app_name }}</h1>
         <p class="text-neutral-500 mt-2">Gère tes tâches avec sérénité</p>
       </div>
 
@@ -194,13 +190,13 @@ async function handleLogin() {
 
       <!-- Contact mobile -->
       <div class="lg:hidden mt-8 flex items-center justify-center gap-4">
-        <a href="https://github.com/krsidoine7-svg" target="_blank" class="p-3 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-600 transition-colors" title="GitHub">
+        <a :href="appConfigStore.config.github_url" target="_blank" class="p-3 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-600 transition-colors" title="GitHub">
           <Github class="h-5 w-5" />
         </a>
-        <a href="mailto:krsidoine7@gmail.com?subject=Contact%20depuis%20UrsUle&body=Bonjour%20Krsidoine%2C%0AJe%20vous%20contacte%20depuis%20l'application%20UrsUle." class="p-3 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-600 transition-colors" title="Email">
+        <a :href="appConfigStore.config.email_url" class="p-3 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-600 transition-colors" title="Email">
           <Mail class="h-5 w-5" />
         </a>
-        <a href="https://wa.me/2250503681588?text=Bonjour%20Krsidoine%20%F0%9F%91%8B%20Je%20vous%20contacte%20depuis%20l'application%20UrsUle." target="_blank" class="p-3 rounded-xl bg-green-50 hover:bg-green-100 text-green-600 transition-colors" title="WhatsApp">
+        <a :href="appConfigStore.config.whatsapp_url" target="_blank" class="p-3 rounded-xl bg-green-50 hover:bg-green-100 text-green-600 transition-colors" title="WhatsApp">
           <MessageCircle class="h-5 w-5" />
         </a>
       </div>

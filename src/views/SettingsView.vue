@@ -16,7 +16,10 @@ import {
   Info, 
   HelpCircle, 
   Shield, 
-  AlertTriangle 
+  AlertTriangle,
+  Palette,
+  Trash2,
+  Plus
 } from 'lucide-vue-next'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -24,13 +27,20 @@ import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { webhookService, type WebhookLog } from '@/services/webhook.service'
 import { driveService } from '@/services/drive.service'
+import { useAuthStore } from '@/stores/auth.store'
+import { useAppConfigStore } from '@/stores/appConfig.store'
 
 const { toast } = useToast()
+const authStore = useAuthStore()
+const appConfigStore = useAppConfigStore()
+
+const isAdmin = computed(() => authStore.user?.email === 'krsidoine7@gmail.com')
 
 const activeTab = ref('automation')
 const webhookUrl = ref('')
 const isTesting = ref(false)
 const logs = ref<WebhookLog[]>([])
+const configForm = ref<any>(null)
 
 const isRestoring = ref(false)
 const autoSyncEnabled = ref(localStorage.getItem('ursule_google_auto_sync') === 'true')
@@ -154,10 +164,42 @@ function toggleLog(id: string) {
   expandedLogId.value = expandedLogId.value === id ? null : id
 }
 
-onMounted(() => {
+function addPortfolioLink() {
+  if (configForm.value) {
+    if (!Array.isArray(configForm.value.portfolio_links)) {
+      configForm.value.portfolio_links = []
+    }
+    configForm.value.portfolio_links = [
+      ...configForm.value.portfolio_links,
+      { label: '', url: '' }
+    ]
+  }
+}
+
+function removePortfolioLink(index: number | string) {
+  if (configForm.value && Array.isArray(configForm.value.portfolio_links)) {
+    const newLinks = [...configForm.value.portfolio_links]
+    newLinks.splice(Number(index), 1)
+    configForm.value.portfolio_links = newLinks
+  }
+}
+
+async function saveBranding() {
+  try {
+    await appConfigStore.updateConfig(configForm.value)
+    toast({ title: 'Marque mise à jour ! ✨' })
+  } catch (e: any) {
+    toast({ title: 'Erreur', description: e.message, variant: 'destructive' })
+  }
+}
+
+onMounted(async () => {
   webhookUrl.value = webhookService.getGlobalWebhookUrl()
   updateLogs()
   window.addEventListener('webhook-logs-updated', updateLogs)
+  
+  await appConfigStore.fetchConfig()
+  configForm.value = JSON.parse(JSON.stringify(appConfigStore.config))
 })
 
 onUnmounted(() => {
@@ -205,6 +247,15 @@ onUnmounted(() => {
       >
         <Cloud class="h-4.5 w-4.5 transition-transform duration-300" :class="activeTab === 'backup' ? 'text-emerald-500' : 'text-neutral-400'" />
         Sauvegarde Cloud
+      </button>
+      <button 
+        v-if="isAdmin"
+        class="px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 flex items-center gap-2.5 hover:scale-[1.02] active:scale-[0.98]"
+        :class="activeTab === 'branding' ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-md border border-neutral-200/30 dark:border-neutral-700/50' : 'text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200'"
+        @click="activeTab = 'branding'"
+      >
+        <Palette class="h-4.5 w-4.5 transition-transform duration-300" :class="activeTab === 'branding' ? 'text-indigo-500' : 'text-neutral-400'" />
+        Apparence & Marque
       </button>
     </div>
 
@@ -518,6 +569,117 @@ onUnmounted(() => {
         </div>
       </div>
 
+    </div>
+
+    <!-- Contenu Branding (Admin Only) -->
+    <div v-if="activeTab === 'branding' && isAdmin && configForm" class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+      <div class="bg-white/70 dark:bg-neutral-900/50 backdrop-blur-xl rounded-3xl border border-neutral-200/50 dark:border-neutral-800/40 p-6 md:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.03)] dark:shadow-none hover:shadow-[0_16px_48px_rgba(0,0,0,0.06)] transition-all duration-500">
+        
+        <div class="flex items-start justify-between gap-4 mb-8">
+          <div>
+            <h2 class="text-xl md:text-2xl font-black text-neutral-900 dark:text-neutral-50 flex items-center gap-3">
+              <span class="p-2.5 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-2xl inline-block shadow-sm">
+                <Palette class="h-6 w-6" />
+              </span>
+              Personnalisation de la Marque
+            </h2>
+            <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-2 leading-relaxed">
+              Modifiez l'apparence de la page de connexion, vos liens de contact et votre portfolio de réalisations.
+            </p>
+          </div>
+        </div>
+
+        <div class="space-y-8">
+          <!-- Textes Généraux -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2.5">
+              <label class="text-xs font-black uppercase tracking-wider text-neutral-500">Nom de l'application</label>
+              <Input v-model="configForm.app_name" class="h-12 bg-neutral-50 dark:bg-neutral-950/40 rounded-xl" />
+            </div>
+            <div class="space-y-2.5">
+              <label class="text-xs font-black uppercase tracking-wider text-neutral-500">Créateur</label>
+              <Input v-model="configForm.author_name" class="h-12 bg-neutral-50 dark:bg-neutral-950/40 rounded-xl" />
+            </div>
+            <div class="space-y-2.5 md:col-span-2">
+              <label class="text-xs font-black uppercase tracking-wider text-neutral-500">Sous-titre (Description)</label>
+              <Input v-model="configForm.app_subtitle" class="h-12 bg-neutral-50 dark:bg-neutral-950/40 rounded-xl" />
+            </div>
+            <div class="space-y-2.5 md:col-span-2">
+              <label class="text-xs font-black uppercase tracking-wider text-neutral-500">Citation de motivation</label>
+              <Input v-model="configForm.quote" class="h-12 bg-neutral-50 dark:bg-neutral-950/40 rounded-xl" />
+            </div>
+          </div>
+
+          <hr class="border-neutral-100 dark:border-neutral-800/80" />
+
+          <!-- Liens de contact -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2.5">
+              <label class="text-xs font-black uppercase tracking-wider text-neutral-500">URL GitHub</label>
+              <Input v-model="configForm.github_url" class="h-12 bg-neutral-50 dark:bg-neutral-950/40 rounded-xl" />
+            </div>
+            <div class="space-y-2.5">
+              <label class="text-xs font-black uppercase tracking-wider text-neutral-500">Texte GitHub affiché</label>
+              <Input v-model="configForm.github_text" class="h-12 bg-neutral-50 dark:bg-neutral-950/40 rounded-xl" />
+            </div>
+            
+            <div class="space-y-2.5">
+              <label class="text-xs font-black uppercase tracking-wider text-neutral-500">Lien Email (mailto:)</label>
+              <Input v-model="configForm.email_url" class="h-12 bg-neutral-50 dark:bg-neutral-950/40 rounded-xl" />
+            </div>
+            <div class="space-y-2.5">
+              <label class="text-xs font-black uppercase tracking-wider text-neutral-500">Texte Email affiché</label>
+              <Input v-model="configForm.email_text" class="h-12 bg-neutral-50 dark:bg-neutral-950/40 rounded-xl" />
+            </div>
+
+            <div class="space-y-2.5">
+              <label class="text-xs font-black uppercase tracking-wider text-neutral-500">Lien WhatsApp</label>
+              <Input v-model="configForm.whatsapp_url" class="h-12 bg-neutral-50 dark:bg-neutral-950/40 rounded-xl" />
+            </div>
+            <div class="space-y-2.5">
+              <label class="text-xs font-black uppercase tracking-wider text-neutral-500">Numéro WhatsApp affiché</label>
+              <Input v-model="configForm.whatsapp_text" class="h-12 bg-neutral-50 dark:bg-neutral-950/40 rounded-xl" />
+            </div>
+          </div>
+
+          <hr class="border-neutral-100 dark:border-neutral-800/80" />
+
+          <!-- Portfolio / Réalisations -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <label class="text-sm font-black uppercase tracking-wider text-neutral-800 dark:text-neutral-200">Mes Réalisations (Portfolio)</label>
+              <Button @click="addPortfolioLink" variant="outline" size="sm" class="h-9 rounded-xl font-bold">
+                <Plus class="h-4 w-4 mr-1.5" /> Ajouter un lien
+              </Button>
+            </div>
+            
+            <div class="space-y-3">
+              <div v-for="(link, i) in configForm.portfolio_links" :key="i" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-neutral-50 dark:bg-neutral-900/50 p-3 rounded-2xl border border-neutral-100 dark:border-neutral-800/80">
+                <Input v-model="link.label" placeholder="Nom du projet (ex: Ofika)" class="w-full h-11 bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 rounded-xl" />
+                <Input v-model="link.url" placeholder="URL (ex: https://...)" class="w-full h-11 bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 rounded-xl" />
+                <Button @click="removePortfolioLink(i)" variant="ghost" class="w-full sm:w-11 h-11 p-0 shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl flex items-center justify-center gap-2">
+                  <Trash2 class="h-5 w-5" />
+                  <span class="sm:hidden font-bold">Retirer ce lien</span>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2.5 pt-4">
+            <label class="text-xs font-black uppercase tracking-wider text-neutral-500">Texte du Copyright (Footer)</label>
+            <Input v-model="configForm.copyright" class="h-12 bg-neutral-50 dark:bg-neutral-950/40 rounded-xl" />
+          </div>
+
+          <div class="pt-6 flex justify-end border-t border-neutral-100/50 dark:border-neutral-800/40">
+            <Button 
+              @click="saveBranding" 
+              class="bg-gradient-to-r from-indigo-600 to-primary-600 hover:from-indigo-700 hover:to-primary-700 text-white h-13 px-8 rounded-2xl font-bold shadow-lg shadow-indigo-500/15 hover:shadow-xl hover:shadow-indigo-500/25 transition-all duration-300"
+            >
+              <Save class="h-4.5 w-4.5 mr-2" /> Publier les modifications
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
 
   </div>
