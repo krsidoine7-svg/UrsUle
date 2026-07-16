@@ -3,7 +3,7 @@ import { useNotesStore } from '@/stores/notes.store'
 import { onMounted, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
-import { LayoutGrid, List, AlignJustify, ArrowDownAZ, Calendar, Trash2 } from 'lucide-vue-next'
+import { LayoutGrid, List, AlignJustify, ArrowDownAZ, Calendar, Trash2, Search, X } from 'lucide-vue-next'
 import NoteDeleteDialog from '@/components/brain/notes/NoteDeleteDialog.vue'
 import { useToast } from '@/components/ui/toast/use-toast'
 import type { Note } from '@/types/brain.types'
@@ -39,6 +39,33 @@ const displayNotes = computed(() => {
   }
 
   return notes
+})
+
+const isJournalOnly = computed({
+  get() {
+    return notesStore.searchQuery.startsWith('type:journal')
+  },
+  set(val: boolean) {
+    if (val) {
+      const clean = notesStore.searchQuery.replace(/^type:journal\s*/, '')
+      notesStore.searchQuery = `type:journal ${clean}`
+    } else {
+      notesStore.searchQuery = notesStore.searchQuery.replace(/^type:journal\s*/, '')
+    }
+  }
+})
+
+const cleanSearchQuery = computed({
+  get() {
+    return notesStore.searchQuery.replace(/^type:journal\s*/, '')
+  },
+  set(val: string) {
+    if (isJournalOnly.value) {
+      notesStore.searchQuery = `type:journal ${val}`
+    } else {
+      notesStore.searchQuery = val
+    }
+  }
 })
 
 async function handleCreateNote() {
@@ -129,10 +156,57 @@ async function handleConfirmDelete() {
 
         <Button 
           @click="handleCreateNote"
-          class="bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow-sm px-3.5 sm:px-4 h-9 sm:h-10 text-xs sm:text-sm shrink-0"
+          class="bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow-sm"
         >
-          + Nouvelle note
+          Nouvelle note
         </Button>
+      </div>
+    </div>
+
+    <!-- Barre de filtres de recherche -->
+    <div class="flex flex-col sm:flex-row items-center gap-3 bg-white border border-neutral-100 p-3 rounded-2xl shadow-sm mb-6 shrink-0">
+      <!-- Input de recherche textuelle -->
+      <div class="relative flex-1 w-full">
+        <Search class="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
+        <input 
+          v-model="cleanSearchQuery"
+          type="text"
+          placeholder="Filtrer par mot-clé..."
+          class="w-full pl-10 pr-9 py-2 bg-neutral-50 hover:bg-neutral-100/75 focus:bg-white text-sm text-neutral-800 placeholder-neutral-400 rounded-xl border border-neutral-200/60 focus:outline-none focus:ring-1 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
+        />
+        <button 
+          v-if="notesStore.searchQuery" 
+          @click="notesStore.searchQuery = ''"
+          class="absolute right-3 top-1/2 transform -translate-y-1/2 p-0.5 rounded-md hover:bg-neutral-200 text-neutral-400 hover:text-neutral-600 transition-colors"
+        >
+          <X class="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      <!-- Sélecteur de type (Notes / Journal) -->
+      <div class="flex items-center bg-neutral-100 p-0.5 rounded-xl shrink-0 w-full sm:w-auto">
+        <button
+          @click="isJournalOnly = false"
+          :class="[
+            'flex-1 sm:flex-initial px-4 py-1.5 rounded-lg text-xs font-bold transition-all',
+            !isJournalOnly 
+              ? 'bg-white text-primary-700 shadow-sm' 
+              : 'text-neutral-500 hover:text-neutral-700'
+          ]"
+        >
+          Notes ordinaires
+        </button>
+        <button
+          @click="isJournalOnly = true"
+          :class="[
+            'flex-1 sm:flex-initial px-4 py-1.5 rounded-lg text-xs font-bold transition-all',
+            isJournalOnly 
+              ? 'bg-white text-emerald-700 shadow-sm' 
+              : 'text-neutral-500 hover:text-neutral-700'
+          ]"
+        >
+          Journaux
+        </button>
       </div>
     </div>
     

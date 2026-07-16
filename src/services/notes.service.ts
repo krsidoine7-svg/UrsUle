@@ -208,5 +208,24 @@ export const notesService = {
       
     if (error) throw error
     return data as NoteFolder
+  },
+
+  async searchNotes(query: string): Promise<Note[]> {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Utilisateur non connecté')
+
+    const { data, error } = await supabase
+      .from('notes')
+      .select('id, title, content, tags, folder_id, is_journal, journal_date, updated_at')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .textSearch('title,content', query, {
+        type: 'websearch',
+        config: 'french'
+      })
+      .limit(20)
+
+    if (error) throw error
+    return data as Note[]
   }
 }

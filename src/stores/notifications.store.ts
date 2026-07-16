@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { supabase } from '@/services/supabase'
 import { useAuthStore } from './auth.store'
 import type { Notification, CreateNotificationDTO } from '@/types/notification.types'
+import { playChimeNotification } from '@/utils/sound'
 
 export const useNotificationsStore = defineStore('notifications', () => {
   const notifications = ref<Notification[]>([])
@@ -142,7 +143,8 @@ export const useNotificationsStore = defineStore('notifications', () => {
             const newNotif = payload.new as Notification
             notifications.value.unshift(newNotif)
 
-            // Déclencher la notification native du navigateur
+            // Déclencher le son et la notification native du navigateur
+            playChimeNotification()
             if ('Notification' in window && Notification.permission === 'granted') {
               new Notification(newNotif.title, {
                 body: newNotif.message,

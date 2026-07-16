@@ -22,11 +22,23 @@ export const useNotesStore = defineStore('notes', () => {
   const expandedFolders = ref<Record<string, boolean>>({})
 
   const filteredNotes = computed(() => {
+    const isSearchJournal = searchQuery.value.startsWith('type:journal')
+    const cleanSearch = searchQuery.value.replace(/^type:journal\s*/, '').toLowerCase()
+
     return notes.value.filter(n => {
-      const matchSearch = searchQuery.value ? n.title.toLowerCase().includes(searchQuery.value.toLowerCase()) : true
-      const matchFolder = selectedFolder.value ? n.folder_id === selectedFolder.value : true
+      if (isSearchJournal) {
+        if (!n.is_journal) return false
+      } else {
+        if (n.is_journal) return false
+      }
+      const matchSearch = cleanSearch ? n.title.toLowerCase().includes(cleanSearch) : true
+      const matchFolder = selectedFolder.value && !isSearchJournal ? n.folder_id === selectedFolder.value : true
       return matchSearch && matchFolder
     })
+  })
+
+  const journalEntries = computed(() => {
+    return notes.value.filter(n => n.is_journal && !n.deleted_at)
   })
 
   const folderTree = computed(() => foldersService.buildTree(folders.value))
@@ -296,6 +308,58 @@ export const useNotesStore = defineStore('notes', () => {
     }
   }
 
+  // ─── Journal Actions ─────────────────────────────────────────────
+
+  async function getJournalEntryForDate(dateStr: string): Promise<Note | null> {
+    loading.value = true
+    try {
+      const localEntry = notes.value.find(n => n.is_journal && n.journal_date === dateStr && !n.deleted_at)
+      if (localEntry) return localEntry
+
+      const { data, error: fetchErr } = await supabase
+        .from('notes')
+        .select('*')
+        .eq('is_journal', true)
+        .eq('journal_date', dateStr)
+        .is('deleted_at', null)
+        .maybeSingle()
+
+      if (fetchErr) throw fetchErr
+      if (data) {
+        if (!notes.value.some(n => n.id === data.id)) {
+          notes.value.push(data as Note)
+        }
+        return data as Note
+      }
+      return null
+    } catch (e: any) {
+      error.value = e.message
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function createJournalEntryForDate(dateStr: string, defaultContent: string, title: string): Promise<Note> {
+    loading.value = true
+    try {
+      const newNote = await notesService.create({
+        title,
+        content: defaultContent,
+        is_journal: true,
+        journal_date: dateStr,
+        folder_id: null
+      })
+      notes.value.unshift(newNote)
+      return newNote
+    } catch (e: any) {
+      error.value = e.message
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     notes,
     folders,
@@ -308,6 +372,7 @@ export const useNotesStore = defineStore('notes', () => {
     loadingTrash,
     error,
     filteredNotes,
+    journalEntries,
     folderTree,
     expandedFolders,
     fetchNotes,
@@ -329,6 +394,8 @@ export const useNotesStore = defineStore('notes', () => {
     toggleFolderExpanded,
     isFolderExpanded,
     setFolderExpanded,
-    subscribeToNotesAndFolders
+    subscribeToNotesAndFolders,
+    getJournalEntryForDate,
+    createJournalEntryForDate
   }
 })

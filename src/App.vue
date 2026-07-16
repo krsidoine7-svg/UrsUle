@@ -16,11 +16,13 @@ import { useProjectsStore } from '@/stores/projects.store'
 import { useNotesStore } from '@/stores/notes.store'
 import { Toaster } from '@/components/ui/toast'
 import { useToast } from '@/components/ui/toast/use-toast'
+import { usePushNotifications } from '@/composables/usePushNotifications'
 
 const route = useRoute()
 const authStore = useAuthStore()
 const uiStore = useUIStore()
 const { toast } = useToast()
+const pushNotifs = usePushNotifications()
 
 const isAuthPage = computed(() => {
   return ['login', 'register', 'forgot-password', 'update-password'].includes(route.name as string)
@@ -73,9 +75,7 @@ let unsubscribeNotesAndFolders: (() => void) | null = null
 
 const handleSubscription = (isAuth: boolean) => {
   if (isAuth) {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission()
-    }
+    pushNotifs.requestPermission()
 
     if (!unsubscribeTasks) {
       unsubscribeTasks = tasksStore.subscribeToTasks()
@@ -107,6 +107,8 @@ watch(() => authStore.isAuthenticated, (isAuth: boolean) => {
 }, { immediate: true })
 
 onMounted(() => {
+  pushNotifs.registerServiceWorker()
+
   // Auto-sync Google Drive si activé et connecté
   setTimeout(async () => {
     const autoSyncEnabled = localStorage.getItem('ursule_google_auto_sync') === 'true'

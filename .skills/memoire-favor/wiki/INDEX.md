@@ -109,6 +109,8 @@ Date | Décision | Contexte | Raison | Alternative rejetée | Liens
 | `sessions/2026-05-10.md` | Session 001 — Setup projet + documentation |
 | `sessions/2026-05-29.md` | Session du 2026-05-29 — Graphe de connaissances Zen Mode, Veille Sécurite V5 et correctif faille Vite |
 | `sessions/2026-06-14.md` | Session du 2026-06-14 — Audit de sécurité total (RLS, XSS, SSRF, Storage) |
+| `sessions/2026-06-14_session-002.md` | Session du 2026-06-14 (002) — Branding Dynamique, RLS Admin, Responsivité et Fix Build |
+| `sessions/2026-07-16_session-003.md` | Session du 2026-07-16 — Sécurisation Base de Données, Correctif Auth & QA |
 | *(à compléter au fil des sessions)* | |
 
 **Relations :** Chaque résumé de session pointe vers le fichier fourtour correspondant.

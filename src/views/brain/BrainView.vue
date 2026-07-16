@@ -5,10 +5,12 @@ import { Brain, FileText, Share2, Search, LibraryBig, Calendar, Waypoints, Netwo
 import { Button } from '@/components/ui/button'
 import { useNotesStore } from '@/stores/notes.store'
 import FolderTree from '@/components/brain/notes/FolderTree.vue'
+import SearchModal from '@/components/brain/SearchModal.vue'
  
 const route = useRoute()
 const router = useRouter()
 const notesStore = useNotesStore()
+const showSearchModal = ref(false)
  
 const isRightSidebarOpen = ref(false) // fermé par défaut sur mobile
 const isLeftSidebarOpen = ref(false)  // fermé par défaut sur mobile
@@ -134,7 +136,7 @@ function navigateTo(path: string) {
 
         <!-- Search -->
         <div class="flex items-center gap-2 w-[220px] justify-end shrink-0">
-          <Button variant="outline" size="icon" class="rounded-xl">
+          <Button @click="showSearchModal = true" variant="outline" size="icon" class="rounded-xl" title="Rechercher (Ctrl+K)">
             <Search class="h-4 w-4 text-neutral-500" />
           </Button>
         </div>
@@ -329,6 +331,9 @@ function navigateTo(path: string) {
       </aside>
 
     </div>
+    
+    <!-- Modal de recherche global (Cmd+K / Ctrl+K) -->
+    <SearchModal v-model="showSearchModal" />
   </div>
 </template>
 

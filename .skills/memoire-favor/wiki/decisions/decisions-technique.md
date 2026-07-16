@@ -79,5 +79,33 @@
 
 ---
 
+## [14 Juin 2026] Centraliser la personnalisation dynamique via un store Pinia (appConfig)
+
+**Contexte :** Permettre à l'administrateur de personnaliser l'image de marque (nom de l'app, citation, auteur, liens) dynamiquement sans recompiler le code.  
+**Décision :** Création d'une table Supabase `app_settings` à ligne unique et d'un store Pinia `appConfig` pour charger et mettre en cache la configuration côté client.  
+**Raison :** Évite de requêter la base de données sur chaque page (ex: Login, Register et Dashboard) tout en rendant les changements immédiats et transparents.  
+**Alternative rejetée :** Variables d'environnement standard (.env) — nécessitent une recompilation et un redéploiement à chaque changement.
+
+---
+
+## [14 Juin 2026] Définir le build target sur ES2022 dans Vite
+
+**Contexte :** Blocage du build suite à une erreur ESBuild sur `date-fns` v4 (`Transforming destructuring to the configured target environment is not supported yet`).  
+**Décision :** Configurer `target: 'es2022'` et `supported: { 'destructuring': true }` dans `vite.config.ts`.  
+**Raison :** Tous les navigateurs modernes supportent nativement la destructuration depuis plusieurs années. Cela évite à esbuild de devoir traduire cette syntaxe moderne, supprimant ainsi l'erreur de compilation tout en optimisant le code produit.  
+**Alternative rejetée :** Utiliser `@vitejs/plugin-legacy` avec Babel — surcharge trop lourde en terme de bundle et inutile pour le public cible d'UrsUle.
+
+---
+
+## [16 Juillet 2026] Durcir l'accès aux fonctions SECURITY DEFINER et corriger l'inscription (GoTrue)
+
+**Contexte :** Blocage de l'inscription utilisateur (`Database error saving new user`) suite au durcissement de sécurité RLS et alertes de sécurité du linter Supabase concernant les fonctions RPC et le search_path.  
+**Décision :** Restreindre l'exécution de toutes les fonctions trigger et cron critiques à `service_role` et `postgres` en révoquant `PUBLIC`. Pour les fonctions liées aux triggers d'auth (`handle_new_user` et `set_admin_on_signup`), accorder explicitement les droits `EXECUTE` au rôle système **`supabase_auth_admin`**. Ajouter la clause `TO authenticated` sur l'intégralité des politiques RLS des tables utilisateur.  
+**Raison :** Bloquer les appels directs non authentifiés de fonctions critiques via RPC sans impacter le comportement interne de PostgreSQL. L'accès de GoTrue (Supabase Auth) nécessite explicitement que son rôle système associé (`supabase_auth_admin`) soit autorisé à exécuter le trigger de création de profil.  
+**Alternative rejetée :** Laisser les fonctions exécutables par `PUBLIC` — cela exposerait des fonctions privilégiées (comme le soft delete global ou la récurrence) à n'importe quel utilisateur connecté (voire non connecté) via l'API REST.
+
+---
+
 *Ajouter chaque nouvelle décision technique importante ici.*  
 *Format : `## [Date] Titre | Contexte | Décision | Raison | Alternative | Lien`*
+
