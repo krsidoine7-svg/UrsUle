@@ -34,6 +34,11 @@ Le code applicatif et l'architecture frontend sont **intégralement finalisés e
 * **Sécurité & Audit (Production Ready)** : Faille SSRF patchée sur l'Edge Function, protection XSS renforcée sur l'éditeur Tiptap (`DOMPurify`), durcissement du Row Level Security (RLS) sur toutes les tables secondaires (Migration `022`), correction des vulnérabilités de `search_path` (Security Definer), et automatisation sécurisée du bucket Storage.
 * **Journal Quotidien (BRAIN-F08)** : Éditeur Tiptap, mini-calendrier avec points d'écriture, streaks, mots de la semaine, heatmap d'activité annuelle (style GitHub), exports Markdown/PDF, chimes audio (Web Audio API) et Service Worker de notifications push.
 * **Recherche Globale (BRAIN-F09)** : Modal interactif `Cmd+K` / `Ctrl+K` avec recherche plein texte Postgres, debounce de 200 ms, navigation au clavier (flèches + Entrée) et barre de filtrage de type ("Notes" vs "Journaux") dans la liste des notes.
+* **Partage Public de Notes (BRAIN-F10)** : Création de liens de partage en lecture seule ou avec mot de passe et expiration (`ShareNoteDialog.vue`), vue publique dédiée (`ShareNotePublicView.vue`) avec export Markdown/PDF, et gestion via la table `note_shares` (`024_note_shares.sql`).
+* **Statistiques PKM & Quiz (BRAIN-F11)** : Dashboard dédié aux métriques du Second Cerveau (`BrainStats.vue`, `BrainStatsView.vue`) avec courbes de notes, flashcards maîtrisées, liens créés, streak journal, et système interactif de révision par Quiz (`QuizDialog.vue`).
+* **Intégration Notes ↔ Tâches / Projets (BRAIN-F12)** : Liaison bidirectionnelle des notes dans le détail des tâches (`TaskDetail.vue`) et le détail des projets (`ProjectDetailView.vue`) avec boutons de création rapide de notes pré-remplies et affichage enrichi.
+* **SDK et Écosystème (`@ursule/brain-sdk`)** : Package TypeScript complet (`packages/ursule-sdk`, `src/sdk/index.ts`) avec validation automatisée (`validate_sdk_brain.ts`), `robots.txt`, `llms.txt` et `sitemap.xml`.
+* **Correctifs de Réactivité & UI (Production Ready)** : Résolution de la race condition d'initialisation Tiptap `useEditor` (`onCreate` + `watch` sur `editor.value` avec `immediate: true`), ajout de `:key="route.fullPath"` sur `BrainView.vue`, et optimisation ergonomique des cartes/dossiers (`min-h-[10rem]`, attributs `title`, badges de décompte exacts).
 
 ---
 
@@ -69,6 +74,8 @@ Pour faire fonctionner le projet, le schéma doit être appliqué sur votre nouv
 19. [`019_search_path_fixes.sql`](supabase/migrations/019_search_path_fixes.sql) (Protection des fonctions *Security Definer* contre les injections de Search Path).
 20. [`020_storage_security.sql`](supabase/migrations/020_storage_security.sql) (Création et sécurisation stricte du bucket `task-attachments` via RLS).
 21. [`022_database_security_fixes.sql`](supabase/migrations/022_database_security_fixes.sql) (Correctifs d'authentification GoTrue, search_path, et durcissement RLS global).
+22. [`023_performance_indexes.sql`](supabase/migrations/023_performance_indexes.sql) (Indexation B-tree et GIN pour l'optimisation des requêtes de recherche et de jointures).
+23. [`024_note_shares.sql`](supabase/migrations/024_note_shares.sql) (Création de la table `note_shares` avec RLS et trigger `updated_at` pour le partage de notes).
 
 ---
 
@@ -86,6 +93,7 @@ Pour faire fonctionner le projet, le schéma doit être appliqué sur votre nouv
 ---
 
 ## 📋 Prochaines Actions suggérées
-- [ ] Valider le flux complet d'inscription utilisateur en local avec la migration `022` appliquée.
+- [ ] Exécuter les migrations `023_performance_indexes.sql` et `024_note_shares.sql` sur l'instance Supabase de production.
+- [ ] Valider le flux complet d'inscription utilisateur et de partage de note public en production.
 - [ ] Configurer la clé publique VAPID dans l'Edge Function pour le push système complet.
 
