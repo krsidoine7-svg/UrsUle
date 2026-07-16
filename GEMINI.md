@@ -31,7 +31,9 @@ Le code applicatif et l'architecture frontend sont **intégralement finalisés e
 * **Google Drive Sync (F-14)** : Connexion OAuth Google, sauvegarde JSON (tâches, projets, PKM) et restauration fonctionnelles.
 * **Brain & PKM (F-17)** : Interface Plein Écran immersive avec panneaux latéraux et supérieurs entièrement rétractables (onglets de couleur).
 * **Graphe de Connaissances** : Implémentation de 3 modes de visualisation distincts (Tout, Libres en grille, Réseau) avec centrage dynamique et suppression du bruit visuel pour une ergonomie maximale. Code testé et prêt pour la production (build validé).
-* **Sécurité & Audit (Production Ready)** : Faille SSRF patchée sur l'Edge Function, protection XSS renforcée sur l'éditeur Tiptap (`DOMPurify`), durcissement du Row Level Security (RLS) sur toutes les tables secondaires, correction des vulnérabilités de `search_path` (Security Definer), et automatisation sécurisée du bucket Storage.
+* **Sécurité & Audit (Production Ready)** : Faille SSRF patchée sur l'Edge Function, protection XSS renforcée sur l'éditeur Tiptap (`DOMPurify`), durcissement du Row Level Security (RLS) sur toutes les tables secondaires (Migration `022`), correction des vulnérabilités de `search_path` (Security Definer), et automatisation sécurisée du bucket Storage.
+* **Journal Quotidien (BRAIN-F08)** : Éditeur Tiptap, mini-calendrier avec points d'écriture, streaks, mots de la semaine, heatmap d'activité annuelle (style GitHub), exports Markdown/PDF, chimes audio (Web Audio API) et Service Worker de notifications push.
+* **Recherche Globale (BRAIN-F09)** : Modal interactif `Cmd+K` / `Ctrl+K` avec recherche plein texte Postgres, debounce de 200 ms, navigation au clavier (flèches + Entrée) et barre de filtrage de type ("Notes" vs "Journaux") dans la liste des notes.
 
 ---
 
@@ -66,6 +68,7 @@ Pour faire fonctionner le projet, le schéma doit être appliqué sur votre nouv
 18. [`018_rls_audit_fixes.sql`](supabase/migrations/018_rls_audit_fixes.sql) (Verrouillage final RLS sur les tables secondaires et désactivation de l'accès public).
 19. [`019_search_path_fixes.sql`](supabase/migrations/019_search_path_fixes.sql) (Protection des fonctions *Security Definer* contre les injections de Search Path).
 20. [`020_storage_security.sql`](supabase/migrations/020_storage_security.sql) (Création et sécurisation stricte du bucket `task-attachments` via RLS).
+21. [`022_database_security_fixes.sql`](supabase/migrations/022_database_security_fixes.sql) (Correctifs d'authentification GoTrue, search_path, et durcissement RLS global).
 
 ---
 
@@ -83,7 +86,6 @@ Pour faire fonctionner le projet, le schéma doit être appliqué sur votre nouv
 ---
 
 ## 📋 Prochaines Actions suggérées
-- [ ] Exécuter **l'intégralité des scripts de migrations SQL** de `001` à `020` sur la console Supabase (SQL Editor) si vous repartez d'un projet vierge.
-- [ ] Tester l'inscription d'un nouvel utilisateur depuis l'interface locale.
-- [x] Configurer un seau (bucket) public nommé `task-attachments` dans le menu **Storage** du tableau de bord Supabase pour activer la gestion des images (Automatisé via la migration `020_storage_security.sql`).
+- [ ] Valider le flux complet d'inscription utilisateur en local avec la migration `022` appliquée.
+- [ ] Configurer la clé publique VAPID dans l'Edge Function pour le push système complet.
 
