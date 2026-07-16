@@ -67,6 +67,7 @@ Date | Décision | Contexte | Raison | Alternative rejetée | Liens
 | `erreurs/typescript.md` | Erreurs TypeScript et solutions | — |
 | `erreurs/supabase.md` | Erreurs Supabase, RLS, Auth | — |
 | `erreurs/paystack.md` | Erreurs Paystack, webhooks, paiements | — |
+| `erreurs/vue-et-tiptap.md` | Erreurs de réactivité Vue 3, éditeur Tiptap, et Vue Router | 2026-07-16 |
 | `erreurs/nextjs.md` | Erreurs Next.js, build, routing | — |
 | `erreurs/drizzle.md` | Erreurs Drizzle ORM, migrations | — |
 | `erreurs/general.md` | Autres erreurs non catégorisées | — |
@@ -111,6 +112,7 @@ Date | Décision | Contexte | Raison | Alternative rejetée | Liens
 | `sessions/2026-06-14.md` | Session du 2026-06-14 — Audit de sécurité total (RLS, XSS, SSRF, Storage) |
 | `sessions/2026-06-14_session-002.md` | Session du 2026-06-14 (002) — Branding Dynamique, RLS Admin, Responsivité et Fix Build |
 | `sessions/2026-07-16_session-003.md` | Session du 2026-07-16 — Sécurisation Base de Données, Correctif Auth & QA |
+| `sessions/2026-07-16_session-004.md` | Session du 2026-07-16 (004) — Suite UrsUle Brain, SDK, et Correctifs Tiptap/UI |
 | *(à compléter au fil des sessions)* | |
 
 **Relations :** Chaque résumé de session pointe vers le fichier fourtour correspondant.
