@@ -566,7 +566,7 @@ onBeforeUnmount(() => {
 
     <!-- Editor Content -->
     <div class="flex-1 overflow-y-auto p-6 bg-white editor-container" @click="handleEditorClick" @dblclick="handleEditorClick">
-      <editor-content :editor="editor" class="h-full min-h-[500px]" />
+      <editor-content :editor="editor" class="prose max-w-none dark:prose-invert h-full min-h-[500px]" />
     </div>
   </div>
 </template>
@@ -576,6 +576,29 @@ onBeforeUnmount(() => {
 .editor-container .ProseMirror {
   outline: none;
   min-height: 100%;
+}
+
+/* Styling explicite des titres et listes pour garantir une mise en forme visuelle parfaite */
+.editor-container .ProseMirror h1 {
+  @apply text-3xl font-extrabold text-neutral-900 dark:text-white mt-6 mb-3 leading-tight tracking-tight;
+}
+.editor-container .ProseMirror h2 {
+  @apply text-2xl font-bold text-neutral-800 dark:text-neutral-100 mt-5 mb-2.5 leading-snug tracking-tight;
+}
+.editor-container .ProseMirror h3 {
+  @apply text-xl font-semibold text-neutral-800 dark:text-neutral-200 mt-4 mb-2 leading-normal;
+}
+.editor-container .ProseMirror ul:not([data-type="taskList"]) {
+  @apply list-disc list-inside my-3 space-y-1.5 pl-3 text-neutral-800 dark:text-neutral-200;
+}
+.editor-container .ProseMirror ol {
+  @apply list-decimal list-inside my-3 space-y-1.5 pl-3 text-neutral-800 dark:text-neutral-200;
+}
+.editor-container .ProseMirror li {
+  @apply leading-relaxed;
+}
+.editor-container .ProseMirror blockquote {
+  @apply border-l-4 border-blue-500 pl-4 py-1.5 italic text-neutral-600 dark:text-neutral-400 my-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-r-lg;
 }
 
 .editor-container .ProseMirror p.is-editor-empty:first-child::before {

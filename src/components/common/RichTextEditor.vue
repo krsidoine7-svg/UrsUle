@@ -309,6 +309,30 @@ onBeforeUnmount(() => {
   outline: none;
 }
 
+.rich-text-editor :deep(.tiptap h1) {
+  @apply text-2xl font-extrabold text-neutral-900 dark:text-white mt-4 mb-2 leading-tight;
+}
+
+.rich-text-editor :deep(.tiptap h2) {
+  @apply text-xl font-bold text-neutral-800 dark:text-neutral-100 mt-3 mb-1.5 leading-snug;
+}
+
+.rich-text-editor :deep(.tiptap h3) {
+  @apply text-lg font-semibold text-neutral-800 dark:text-neutral-200 mt-2 mb-1;
+}
+
+.rich-text-editor :deep(.tiptap ul:not([data-type="taskList"])) {
+  @apply list-disc list-inside my-2 space-y-1 pl-3 text-neutral-800 dark:text-neutral-200;
+}
+
+.rich-text-editor :deep(.tiptap ol) {
+  @apply list-decimal list-inside my-2 space-y-1 pl-3 text-neutral-800 dark:text-neutral-200;
+}
+
+.rich-text-editor :deep(.tiptap li) {
+  @apply leading-relaxed;
+}
+
 .rich-text-editor :deep(.tiptap p.is-editor-empty:first-child::before) {
   color: #a3a3a3; /* neutral-400 */
   float: left;

@@ -1,12 +1,14 @@
-<script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { notesService } from '@/services/notes.service'
 import type { Note, NoteShare } from '@/types/brain.types'
+import { useToast } from '@/components/ui/toast/use-toast'
 import {
   Share2, Copy, Check, Eye, MessageSquare, Edit3, Lock, X,
   FileText, Network, GitBranch, Layers, Mail, Trash2, UserPlus,
   Calendar, Link, Globe, Loader2, Shield
 } from 'lucide-vue-next'
+
+const { toast } = useToast()
 
 const props = defineProps<{
   isOpen: boolean
@@ -119,8 +121,13 @@ async function handleCreateOrUpdateLinkShare() {
       shares.value.unshift(created)
     }
     emit('update')
+    toast({ title: 'Paramètres de partage mis à jour ! 🌐' })
   } catch (e: any) {
-    alert(e?.message || 'Erreur lors de la mise à jour du lien de partage.')
+    toast({
+      title: 'Erreur de partage',
+      description: e?.message || 'Erreur lors de la mise à jour du lien de partage.',
+      variant: 'destructive'
+    })
   } finally {
     isSaving.value = false
   }
@@ -139,8 +146,13 @@ async function handleInviteEmail() {
     shares.value.unshift(created)
     inviteEmail.value = ''
     emit('update')
+    toast({ title: 'Collaborateur invité avec succès ! ✉️' })
   } catch (e: any) {
-    alert(e?.message || 'Erreur lors de l’invitation du collaborateur.')
+    toast({
+      title: 'Erreur d’invitation',
+      description: e?.message || 'Erreur lors de l’invitation du collaborateur.',
+      variant: 'destructive'
+    })
   } finally {
     isSaving.value = false
   }
@@ -161,6 +173,7 @@ function copyToClipboard() {
   if (!shareUrl.value) return
   navigator.clipboard.writeText(shareUrl.value)
   isCopied.value = true
+  toast({ title: 'Lien copié dans le presse-papiers ! 📋' })
   if (copyTimer.value) clearTimeout(copyTimer.value)
   copyTimer.value = setTimeout(() => {
     isCopied.value = false

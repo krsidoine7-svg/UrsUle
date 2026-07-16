@@ -7,7 +7,7 @@
 CREATE TABLE IF NOT EXISTS public.note_shares (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   note_id UUID NOT NULL REFERENCES public.notes(id) ON DELETE CASCADE,
-  owner_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  owner_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   email VARCHAR(255) NULL,
   share_token VARCHAR(64) UNIQUE NULL DEFAULT encode(gen_random_bytes(32), 'hex'),
   custom_slug VARCHAR(100) UNIQUE NULL,
@@ -32,7 +32,7 @@ ALTER TABLE public.note_shares ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ N
 CREATE TABLE IF NOT EXISTS public.note_comments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   note_id UUID NOT NULL REFERENCES public.notes(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   author_name VARCHAR(100) NOT NULL DEFAULT 'Anonyme',
   content TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -65,7 +65,7 @@ CREATE POLICY "collaborator_view_shares" ON public.note_shares
   FOR SELECT TO authenticated
   USING (
     email IS NOT NULL AND 
-    (email = (auth.jwt() ->> 'email') OR email = (SELECT email FROM auth.users WHERE id = auth.uid())) AND
+    (email = (auth.jwt() ->> 'email') OR email = (SELECT email FROM public.profiles WHERE id = auth.uid())) AND
     permission != 'none' AND
     (expires_at IS NULL OR expires_at > NOW())
   );
@@ -122,9 +122,9 @@ BEGIN
     RAISE EXCEPTION '404: La note originale a été supprimée ou n''est plus disponible.';
   END IF;
 
-  -- 3. Récupérer le nom ou email du propriétaire pour l'entête
-  SELECT COALESCE(raw_user_meta_data->>'full_name', email, 'Propriétaire') INTO v_owner_name
-  FROM auth.users
+  -- 3. Récupérer le nom ou email du propriétaire depuis public.profiles
+  SELECT COALESCE(full_name, email, 'Propriétaire') INTO v_owner_name
+  FROM public.profiles
   WHERE id = v_note.user_id;
 
   v_content := v_note.content;
