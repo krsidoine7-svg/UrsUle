@@ -36,3 +36,9 @@ dist-ssr
 supabase/.temp
 
 .temp
+
+# Python / Locust venv & cache
+.venv
+venv
+__pycache__
+*.pyc

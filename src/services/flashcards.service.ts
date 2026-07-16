@@ -189,5 +189,29 @@ export const flashcardsService = {
       card: updatedCard as Flashcard,
       review: insertedReview as FlashcardReview
     }
+  },
+
+  /**
+   * Recherche globale dans les flashcards (questions + réponses)
+   */
+  async searchFlashcards(query: string, userId?: string): Promise<Flashcard[]> {
+    let targetUserId = userId
+    if (!targetUserId) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Utilisateur non connecté')
+      targetUserId = user.id
+    }
+
+    const cleanQ = query.replace(/[%_]/g, '')
+    const { data, error } = await supabase
+      .from('flashcards')
+      .select('*')
+      .eq('user_id', targetUserId)
+      .or(`question.ilike.%${cleanQ}%,answer.ilike.%${cleanQ}%`)
+      .order('created_at', { ascending: false })
+      .limit(30)
+
+    if (error) throw error
+    return data as Flashcard[]
   }
 }

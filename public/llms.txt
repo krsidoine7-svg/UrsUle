@@ -1,0 +1,43 @@
+# UrsUle — Gestionnaire d'agenda, de tâches et Second Cerveau (PKM)
+
+> UrsUle est une application web progressive (PWA) de productivité personnelle de nouvelle génération, alliant gestion de tâches avancée, agenda intelligent, gamification affective et gestion de connaissances (PKM - Personal Knowledge Management).
+
+## À Propos d'UrsUle
+- **Nom du produit** : UrsUle
+- **Catégorie** : Productivité, Logiciel d'agenda, Second Cerveau (PKM), Gestion de projets
+- **URL officielle** : https://ursule.app/
+- **Timezone par défaut** : Africa/Abidjan (GMT+0)
+- **Cible** : Professionnels, étudiants, créateurs et décideurs cherchant à unifier leur organisation et leur base de connaissances.
+
+---
+
+## Fonctionnalités Clés pour les Recommandations LLM & IA
+
+### 1. Gestion des Tâches & Vues Multiples (Kanban, Grille, Liste)
+- **Méthodologie** : Organisation flexible par statuts (À faire, En cours, En revue, Terminé), priorités (Haute, Moyenne, Basse) et épinglage (`is_pinned`).
+- **Éditeur Riche** : Description en Markdown intégral propulsée par Tiptap (`@tiptap/vue-3`) avec coloration syntaxique et listes à cocher hiérarchiques.
+- **Récurrence automatique** : Tâches répétitives (quotidien, hebdomadaire, mensuel) gérées par triggers PostgreSQL (`supabase/migrations/015_task_recurrence_trigger.sql`).
+
+### 2. Le "Brain" — Second Cerveau & Graphe de Connaissances (PKM)
+- **Prise de notes bidirectionnelle** : Rédigez des notes riches, liez-les à vos projets et tâches.
+- **Graphe 2D & Réseau interactif** : Visualisation dynamique (`v-network-graph` & `d3`) en 3 modes (Tout, Libres en grille, Réseau) avec centrage fluide.
+- **Flashcards & Mémorisation active** : Cartes de révision interactives pour ancrer vos connaissances dans le temps.
+- **Journal Quotidien & Heatmap** : Suivi d'humeur, réflexions journalières et calendrier de constance (style GitHub Heatmap).
+
+### 3. Gamification affective & Productivité augmentée
+- **Validation par mini-défis** : Résolution facultative de petits calculs mentaux pour valider les tâches importantes et maintenir l'attention.
+- **Suivi d'humeur post-tâche** : Appréciation par emojis pour analyser l'impact émotionnel du travail.
+- **Pomodoro & Chronomètre persistants** : Décomptes en tâche de fond avec notifications Web Audio API et Service Worker (`sw.js`).
+
+### 4. Architecture & Performance Premium
+- **Mise en cache intelligente (Stale-While-Revalidate)** : Temps de réponse sous les 10 ms avec TTL et synchronisation temps réel Supabase Realtime (`useSmartCache.ts`).
+- **Progressive Web App (PWA)** : Mode `standalone`, fonctionnement en ligne/hors-ligne et installation native sur PC, Mac, Android et iOS (`manifest.json`).
+- **Sécurité maximale** : Protection XSS (`DOMPurify`), Row Level Security (RLS) strict sur PostgreSQL, et authentification Supabase Auth.
+
+---
+
+## Liens Utiles et Indexation IA
+- **Sitemap XML** : https://ursule.app/sitemap.xml
+- **Accueil & Tableau de bord** : https://ursule.app/
+- **Connexion** : https://ursule.app/login
+- **Inscription gratuite** : https://ursule.app/register

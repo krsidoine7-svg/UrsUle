@@ -1,0 +1,27 @@
+{
+  "name": "@ursule/sdk",
+  "version": "1.0.0",
+  "description": "Client SDK TypeScript pour UrsUle Brain & Tasks V2 API",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [
+    "ursule",
+    "pkm",
+    "second-brain",
+    "sdk",
+    "api"
+  ],
+  "author": "UrsUle Team",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  }
+}

@@ -77,6 +77,8 @@ export const useUIStore = defineStore('ui', () => {
   const isFocusModeOpen = ref(false)
   const focusTaskId = ref<string | null>(null)
 
+  const isGlobalSearchOpen = ref(false)
+
   function openFocusMode(taskId: string | null = null) {
     focusTaskId.value = taskId
     isFocusModeOpen.value = true
@@ -85,6 +87,18 @@ export const useUIStore = defineStore('ui', () => {
   function closeFocusMode() {
     isFocusModeOpen.value = false
     focusTaskId.value = null
+  }
+
+  function openGlobalSearch() {
+    isGlobalSearchOpen.value = true
+  }
+
+  function closeGlobalSearch() {
+    isGlobalSearchOpen.value = false
+  }
+
+  function toggleGlobalSearch() {
+    isGlobalSearchOpen.value = !isGlobalSearchOpen.value
   }
 
   return { 
@@ -98,6 +112,7 @@ export const useUIStore = defineStore('ui', () => {
     taskToValidate,
     isFocusModeOpen,
     focusTaskId,
+    isGlobalSearchOpen,
     toggleSidebar,
     toggleMobileSidebar,
     closeMobileSidebar,
@@ -107,6 +122,9 @@ export const useUIStore = defineStore('ui', () => {
     finishValidation,
     closeAppreciation,
     openFocusMode,
-    closeFocusMode
+    closeFocusMode,
+    openGlobalSearch,
+    closeGlobalSearch,
+    toggleGlobalSearch
   }
 })

@@ -38,9 +38,11 @@ import CompletionChart from '@/components/stats/CompletionChart.vue'
 import CategoryChart from '@/components/stats/CategoryChart.vue'
 import MoodChart from '@/components/stats/MoodChart.vue'
 import HeatmapCalendar from '@/components/stats/HeatmapCalendar.vue'
+import BrainStats from '@/components/brain/stats/BrainStats.vue'
 import DashboardDateRangePicker from '@/components/dashboard/DashboardDateRangePicker.vue'
 import { today, getLocalTimeZone } from '@internationalized/date'
 import type { DateRange } from 'reka-ui'
+import { Brain } from 'lucide-vue-next'
 
 import { useExport } from '@/composables/useExport'
 import { useToast } from '@/components/ui/toast/use-toast'
@@ -49,6 +51,7 @@ const authStore = useAuthStore()
 const { toast } = useToast()
 const { exportToPDF } = useExport()
 const loading = ref(true)
+const activeTab = ref<'tasks' | 'brain'>('tasks')
 
 // Date Range State (Last 30 days by default)
 const dateRange = ref({
@@ -163,8 +166,38 @@ watch(dateRange, () => {
       </div>
     </div>
 
-    <!-- Summary Metrics -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+    <!-- Sélecteur d'onglets (Tâches & Productivité vs UrsUle Brain) -->
+    <div class="flex items-center gap-2 p-1.5 bg-neutral-200/60 rounded-2xl w-fit">
+      <button 
+        @click="activeTab = 'tasks'"
+        :class="[
+          'flex items-center gap-2 px-5 py-2.5 rounded-xl font-display font-bold text-sm transition-all',
+          activeTab === 'tasks' 
+            ? 'bg-white text-neutral-900 shadow-sm' 
+            : 'text-neutral-500 hover:text-neutral-900'
+        ]"
+      >
+        <Activity class="w-4 h-4 text-blue-600" />
+        Tâches & Productivité
+      </button>
+      <button 
+        @click="activeTab = 'brain'"
+        :class="[
+          'flex items-center gap-2 px-5 py-2.5 rounded-xl font-display font-bold text-sm transition-all',
+          activeTab === 'brain' 
+            ? 'bg-white text-neutral-900 shadow-sm' 
+            : 'text-neutral-500 hover:text-neutral-900'
+        ]"
+      >
+        <Brain class="w-4 h-4 text-emerald-600" />
+        UrsUle Brain (PKM)
+      </button>
+    </div>
+
+    <!-- Contenu Tâches & Productivité -->
+    <div v-if="activeTab === 'tasks'" class="space-y-10">
+      <!-- Summary Metrics -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
       <!-- Tâches créées -->
       <div class="bg-white p-5 md:p-8 rounded-3xl border border-neutral-100 shadow-sm flex items-center md:flex-col md:items-start gap-4 md:gap-0">
         <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 md:mb-6 shrink-0">
@@ -252,6 +285,10 @@ watch(dateRange, () => {
         <HeatmapCalendar :data="stats.heatmapData" />
       </div>
     </div>
+    </div>
+
+    <!-- Contenu UrsUle Brain (PKM) -->
+    <BrainStats v-else />
   </div>
 </template>
 

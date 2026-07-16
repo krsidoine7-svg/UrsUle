@@ -2,9 +2,65 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>UrsUle — Ta Productivité, Ta Réussite</title>
+    <title id="page-title">UrsUle — Ta Productivité, Ta Réussite</title>
+    
+    <!-- Balises SEO & Réseaux Sociaux -->
+    <meta name="description" id="meta-desc" content="UrsUle : Gestionnaire d'agenda et de tâches intelligent, intuitif, visuellement fort et gamifié. Boostez votre productivité et organisez votre second cerveau." />
+    <meta name="keywords" content="agenda, tâches, productivité, second cerveau, PKM, kanban, pomodoro, notes, gamification, gestion de projet, UrsUle" />
+    <meta name="author" content="UrsUle" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" id="canonical-url" href="https://ursule.app/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" id="og-url" content="https://ursule.app/" />
+    <meta property="og:title" id="og-title" content="UrsUle — Ta Productivité, Ta Réussite" />
+    <meta property="og:description" id="og-desc" content="Gestionnaire d'agenda, de tâches, de projets et second cerveau intelligent, intuitif et gamifié." />
+    <meta property="og:image" content="/icon-512.svg" />
+    <meta property="og:site_name" content="UrsUle" />
+    <meta property="og:locale" content="fr_FR" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" id="twitter-title" content="UrsUle — Ta Productivité, Ta Réussite" />
+    <meta name="twitter:description" id="twitter-desc" content="Gestionnaire d'agenda et de tâches intelligent, intuitif et visuellement fort et gamifié." />
+    <meta name="twitter:image" content="/icon-512.svg" />
+
+    <!-- Balises PWA & Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="apple-touch-icon" href="/icon-192.svg" />
+
+    <!-- GEO / Moteurs IA : Données structurées JSON-LD (Schema.org) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "UrsUle",
+      "url": "https://ursule.app/",
+      "description": "Gestionnaire d'agenda et de tâches intelligent, intuitif, visuellement fort et gamifié avec Second Cerveau (PKM) intégré.",
+      "applicationCategory": "ProductivityApplication",
+      "operatingSystem": "All",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      },
+      "featureList": [
+        "Gestion de tâches Kanban et sous-tâches",
+        "Second Cerveau (PKM) avec liens bidirectionnels et graphe 2D/3D",
+        "Chronomètre Pomodoro persistant en tâche de fond",
+        "Défis de calcul mental de validation et suivi d'humeur",
+        "Mode PWA 100% autonome en ligne et hors-ligne",
+        "Synchronisation Cloud Supabase et Google Drive"
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="app"></div>

@@ -10,8 +10,8 @@ self.addEventListener('push', function(event) {
     const title = payload.title || 'UrsUle 📅';
     const options = {
       body: payload.body || 'Nouveau rappel de productivité !',
-      icon: payload.icon || '/icon-192.png',
-      badge: payload.badge || '/badge-72.png',
+      icon: payload.icon || '/icon-192.svg',
+      badge: payload.badge || '/badge-72.svg',
       vibrate: payload.vibrate || [200, 100, 200],
       sound: payload.sound || '/sounds/notification.mp3', // supporté par certains navigateurs mobiles
       data: {
@@ -57,4 +57,16 @@ self.addEventListener('notificationclick', function(event) {
       }
     })
   );
+});
+
+// Écouter les messages émis par le client pour forcer l'activation d'une nouvelle version (SKIP_WAITING)
+self.addEventListener('message', function(event) {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('⚡ [Service Worker] SKIP_WAITING reçu, activation immédiate de la nouvelle version...');
+    self.skipWaiting();
+  }
+});
+
+self.addEventListener('activate', function(event) {
+  event.waitUntil(self.clients.claim());
 });

@@ -21,11 +21,24 @@ import {
   Loader2,
   ChevronRight,
   FolderOpen,
-  Plus
+  Plus,
+  ExternalLink,
+  Link2,
+  Search,
+  X,
+  BookOpen,
+  HelpCircle,
+  CheckCircle2,
+  Sparkles,
+  Award
 } from 'lucide-vue-next'
 import { useUIStore } from '@/stores/ui.store'
+import { useNotesStore } from '@/stores/notes.store'
+import { supabase } from '@/services/supabase'
+import type { Note } from '@/types/brain.types'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
   AlertDialog, 
@@ -47,6 +60,7 @@ const route = useRoute()
 const router = useRouter()
 const projectsStore = useProjectsStore()
 const tasksStore = useTasksStore()
+const notesStore = useNotesStore()
 const uiStore = useUIStore()
 const { toast } = useToast()
 
@@ -99,6 +113,7 @@ const tasksStatsAffected = computed(() => {
 
 onMounted(async () => {
   await loadProject()
+  notesStore.fetchNotes()
 })
 
 async function loadProject() {
@@ -150,6 +165,111 @@ function openDetail(task: any) {
 function openEditForm(task: any) {
   selectedTaskForDetail.value = null
   uiStore.openTaskForm(task)
+}
+
+// ─── UrsUle Brain (Notes & Quiz Projet) ──────────────────────────
+const showLinkNoteModal = ref(false)
+const noteSearchQuery = ref('')
+const showQuizDialog = ref(false)
+const quizAnswer = ref('')
+const quizFeedback = ref<{ correct: boolean; message: string } | null>(null)
+const isSubmittingQuiz = ref(false)
+
+const linkedNotes = computed(() => {
+  if (!project.value) return []
+  return notesStore.notes.filter(n => n.linked_project_id === project.value.id && !n.deleted_at)
+})
+
+const availableNotesToLink = computed(() => {
+  if (!project.value) return []
+  const q = noteSearchQuery.value.toLowerCase().trim()
+  return notesStore.notes.filter(n => 
+    !n.deleted_at && 
+    n.linked_project_id !== project.value.id &&
+    (!q || n.title.toLowerCase().includes(q))
+  ).slice(0, 10)
+})
+
+const currentProjectQuiz = computed(() => {
+  if (!project.value) return { question: '', title: '' }
+  const noteCount = linkedNotes.value.length
+  const taskCount = project.value.tasks?.length || 0
+  return {
+    title: `Quiz de Maîtrise : ${project.value.name}`,
+    question: `Vous avez ${noteCount} note(s) et ${taskCount} tâche(s) sur ce projet. Quel est le principal apprentissage ou résultat technique que vous devez retenir et appliquer pour la suite ?`
+  }
+})
+
+async function linkExistingNote(note: Note) {
+  if (!project.value) return
+  try {
+    await notesStore.linkNoteToProject(note.id, project.value.id)
+    showLinkNoteModal.value = false
+    noteSearchQuery.value = ''
+    toast({ title: 'Note liée au projet ! 📝' })
+  } catch (e: any) {
+    toast({ title: 'Erreur', description: e.message, variant: 'destructive' })
+  }
+}
+
+async function createNoteForProject() {
+  if (!project.value) return
+  try {
+    const templateContent = `## README : ${project.value.name}\n${project.value.description || 'Description du projet...'}\n\n## Journal des décisions & Architecture\n- \n\n## Leçons retenues & Notes techniques\n- `
+    const newNote = await notesStore.createNote({
+      title: `[Projet] ${project.value.name}`,
+      content: templateContent,
+      linked_project_id: project.value.id,
+      tags: ['projet', 'wiki', project.value.name.toLowerCase().replace(/\s+/g, '-')]
+    })
+    toast({ title: 'Note Wiki créée pour le projet ! ✨' })
+    router.push({ path: '/brain', query: { noteId: newNote.id } })
+  } catch (e: any) {
+    toast({ title: 'Erreur', description: e.message, variant: 'destructive' })
+  }
+}
+
+async function unlinkNote(note: Note) {
+  try {
+    await notesStore.linkNoteToProject(note.id, null)
+    toast({ title: 'Lien supprimé' })
+  } catch (e: any) {
+    toast({ title: 'Erreur', description: e.message, variant: 'destructive' })
+  }
+}
+
+function openNoteInBrain(note: Note) {
+  router.push({ path: '/brain', query: { noteId: note.id } })
+}
+
+async function submitProjectQuiz() {
+  if (!quizAnswer.value.trim() || !project.value) return
+  isSubmittingQuiz.value = true
+  try {
+    const isGood = quizAnswer.value.trim().length >= 10
+    await supabase.from('note_quizzes').insert({
+      user_id: (await supabase.auth.getUser()).data.user?.id,
+      project_id: project.value.id,
+      trigger: 'project_complete',
+      question: currentProjectQuiz.value.question,
+      question_type: 'open',
+      is_answered: true,
+      user_answer: quizAnswer.value,
+      is_correct: isGood,
+      answered_at: new Date().toISOString()
+    })
+    quizFeedback.value = {
+      correct: isGood,
+      message: isGood 
+        ? '🎉 Excellent ! Votre réflexion est enregistrée dans l\'historique du projet et de l\'apprentissage.' 
+        : '💡 Réponse un peu courte, mais enregistrée ! N\'hésitez pas à détailler davantage vos notes.'
+    }
+    toast({ title: 'Quiz validé et enregistré dans UrsUle Brain ! 🧠' })
+  } catch (e: any) {
+    toast({ title: 'Erreur', description: e.message, variant: 'destructive' })
+  } finally {
+    isSubmittingQuiz.value = false
+  }
 }
 </script>
 
@@ -354,16 +474,192 @@ function openEditForm(task: any) {
         </div>
       </TabsContent>
 
-      <TabsContent value="notes" class="animate-in fade-in slide-in-from-bottom-2 duration-300 outline-none">
-        <div class="bg-white rounded-[2.5rem] border border-neutral-100 p-8 shadow-sm">
-          <div class="flex items-center justify-between mb-6">
-            <h3 class="text-xl font-bold text-neutral-800">Notes du projet</h3>
-            <p class="text-xs text-neutral-400">Sauvegarde automatique via Markdown</p>
+      <TabsContent value="notes" class="animate-in fade-in slide-in-from-bottom-2 duration-300 outline-none space-y-6">
+        <!-- Barre d'actions & Quiz UrsUle Brain -->
+        <div class="bg-gradient-to-r from-primary-600 to-primary-800 rounded-[2rem] p-6 text-white shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center shrink-0">
+              <BookOpen class="h-6 w-6 text-primary-200" />
+            </div>
+            <div>
+              <h3 class="text-lg font-display font-bold">📖 Wiki & Centre de Connaissances</h3>
+              <p class="text-xs text-primary-100">Synchronisé en temps réel avec le Second Cerveau (UrsUle Brain)</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              class="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs font-bold rounded-xl"
+              @click="showQuizDialog = !showQuizDialog"
+            >
+              <HelpCircle class="h-4 w-4 mr-1.5 text-amber-300" /> 
+              {{ showQuizDialog ? 'Fermer le Quiz' : '✨ Quiz de Révision' }}
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              class="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs font-bold rounded-xl"
+              @click="showLinkNoteModal = !showLinkNoteModal"
+            >
+              <Link2 class="h-4 w-4 mr-1.5" /> Lier une note
+            </Button>
+            <Button 
+              size="sm" 
+              class="bg-white text-primary-800 hover:bg-primary-50 text-xs font-bold rounded-xl shadow-md"
+              @click="createNoteForProject"
+            >
+              <Plus class="h-4 w-4 mr-1.5" /> Nouvelle note Wiki
+            </Button>
+          </div>
+        </div>
+
+        <!-- Encadré Quiz de Révision Projet -->
+        <div v-if="showQuizDialog" class="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/80 rounded-[2rem] p-6 shadow-md space-y-4 animate-in zoom-in-95 duration-200">
+          <div class="flex items-center justify-between border-b border-amber-200/60 pb-3">
+            <div class="flex items-center gap-2">
+              <span class="p-1.5 bg-amber-500 text-white rounded-xl shadow-sm">
+                <Award class="h-4 w-4" />
+              </span>
+              <h4 class="font-display font-bold text-neutral-900 text-sm">{{ currentProjectQuiz.title }}</h4>
+            </div>
+            <Badge variant="outline" class="bg-white text-amber-800 border-amber-300 text-[10px] font-bold">
+              Validation active
+            </Badge>
+          </div>
+          
+          <p class="text-xs text-neutral-700 font-medium leading-relaxed">
+            {{ currentProjectQuiz.question }}
+          </p>
+
+          <div class="space-y-3">
+            <textarea 
+              v-model="quizAnswer"
+              rows="3"
+              placeholder="Rédigez ici votre synthèse ou vos points d'attention (min. 10 caractères)..."
+              class="w-full text-xs p-3 rounded-xl border border-amber-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-neutral-800 placeholder:text-neutral-400"
+            ></textarea>
+            
+            <div class="flex items-center justify-between">
+              <span v-if="quizFeedback" class="text-xs font-bold" :class="quizFeedback.correct ? 'text-green-700' : 'text-amber-700'">
+                {{ quizFeedback.message }}
+              </span>
+              <span v-else class="text-[11px] text-neutral-400 italic">Répondez pour valider et indexer votre progression dans le PKM</span>
+              
+              <Button 
+                size="sm" 
+                class="bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl px-4"
+                :disabled="isSubmittingQuiz || !quizAnswer.trim()"
+                @click="submitProjectQuiz"
+              >
+                <CheckCircle2 class="h-4 w-4 mr-1.5" /> Enregistrer ma synthèse
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mini sélecteur pour lier une note existante -->
+        <div v-if="showLinkNoteModal" class="p-5 rounded-[2rem] bg-white border border-primary-200 shadow-lg space-y-4 animate-in fade-in zoom-in-95 duration-150">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold text-neutral-800 flex items-center gap-2">
+              <Search class="h-4 w-4 text-primary-600" /> Sélectionner une note existante dans UrsUle Brain
+            </span>
+            <button class="text-neutral-400 hover:text-neutral-600" @click="showLinkNoteModal = false">
+              <X class="h-4 w-4" />
+            </button>
+          </div>
+          <Input 
+            v-model="noteSearchQuery" 
+            placeholder="Rechercher par titre (ex: Architecture, Réunion, Idée)..." 
+            class="h-10 text-xs bg-neutral-50 rounded-xl"
+          />
+          <div class="max-h-60 overflow-y-auto space-y-1.5 pr-1">
+            <div 
+              v-for="n in availableNotesToLink" 
+              :key="n.id"
+              class="p-3 rounded-xl hover:bg-primary-50 cursor-pointer flex items-center justify-between text-xs transition-colors border border-neutral-100 hover:border-primary-200"
+              @click="linkExistingNote(n)"
+            >
+              <div class="flex items-center gap-2.5 truncate pr-2">
+                <FileText class="h-4 w-4 text-primary-600 shrink-0" />
+                <span class="font-bold text-neutral-800 truncate">{{ n.title }}</span>
+              </div>
+              <Badge variant="outline" class="text-[10px] shrink-0 bg-white border-primary-200 text-primary-700 font-bold">Lier au projet</Badge>
+            </div>
+            <div v-if="availableNotesToLink.length === 0" class="text-center py-6 text-xs text-neutral-400 italic bg-neutral-50 rounded-xl">
+              Aucune note correspondante dans votre Second Cerveau.
+            </div>
+          </div>
+        </div>
+
+        <!-- Liste des notes liées à ce projet (UrsUle Brain) -->
+        <div v-if="linkedNotes.length > 0" class="space-y-3">
+          <h4 class="text-sm font-bold text-neutral-400 uppercase tracking-widest px-2">
+            📚 Notes indexées pour ce projet ({{ linkedNotes.length }})
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div 
+              v-for="note in linkedNotes" 
+              :key="note.id"
+              class="p-4 rounded-[1.8rem] bg-white border border-neutral-200 hover:border-primary-300 shadow-sm hover:shadow-md transition-all flex items-center justify-between group"
+            >
+              <div class="flex items-center gap-3 overflow-hidden">
+                <div class="p-2.5 rounded-2xl bg-primary-50 text-primary-600 shrink-0">
+                  <FileText class="h-5 w-5" />
+                </div>
+                <div class="overflow-hidden">
+                  <h5 class="text-sm font-bold text-neutral-900 truncate group-hover:text-primary-700 transition-colors">
+                    {{ note.title }}
+                  </h5>
+                  <div class="flex items-center gap-2 text-[10px] text-neutral-400 mt-1">
+                    <span>Modifié le {{ formatDate(note.updated_at) }}</span>
+                    <span v-if="note.tags?.length" class="flex gap-1">
+                      <span v-for="tag in note.tags.slice(0, 2)" :key="tag" class="px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600 font-medium">
+                        #{{ tag }}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0 ml-2">
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  class="h-9 w-9 text-neutral-500 hover:text-primary-600 hover:bg-primary-50 rounded-xl"
+                  @click="openNoteInBrain(note)"
+                  title="Ouvrir dans UrsUle Brain"
+                >
+                  <ExternalLink class="h-4 w-4" />
+                </Button>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  class="h-9 w-9 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
+                  @click="unlinkNote(note)"
+                  title="Détacher la note du projet"
+                >
+                  <X class="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- README principal / Notes de brouillon -->
+        <div class="bg-white rounded-[2.5rem] border border-neutral-100 p-8 shadow-sm space-y-6">
+          <div class="flex items-center justify-between border-b border-neutral-100 pb-4">
+            <div>
+              <h3 class="text-xl font-display font-bold text-neutral-800">📝 Brouillon rapide & Notes README</h3>
+              <p class="text-xs text-neutral-400">Ces notes restent rattachées à la fiche du projet</p>
+            </div>
+            <Badge variant="secondary" class="bg-primary-50 text-primary-700 font-bold">
+              Markdown Auto-save
+            </Badge>
           </div>
           <RichTextEditor 
             v-model="project.notes" 
             @update:model-value="saveNotes"
-            placeholder="Prends des notes pour ce projet..."
+            placeholder="Prends des notes rapides, définis l'architecture, ou rédige le README de ton projet..."
           />
         </div>
       </TabsContent>

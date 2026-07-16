@@ -2,12 +2,15 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '@/services/supabase'
 import { projectsService } from '@/services/projects.service'
+import { useSmartCache } from '@/composables/useSmartCache'
 import type { Project, CreateProjectDTO, UpdateProjectDTO, ProjectStatus } from '@/types/project.types'
 
 export const useProjectsStore = defineStore('projects', () => {
   const projects = ref<Project[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+
+  const { isCacheValid, updateTimestamp, invalidateCache } = useSmartCache({ defaultTTLSeconds: 300 })
 
   const activeProjects = computed(() => 
     projects.value.filter(p => p.status === 'active')
@@ -22,10 +25,13 @@ export const useProjectsStore = defineStore('projects', () => {
     }
   })
 
-  async function fetchProjects(silent = false) {
+  async function fetchProjects(silent = false, forceRefresh = false) {
+    if (!forceRefresh && isCacheValid('projects') && projects.value.length > 0) return
+
     if (!silent) loading.value = true
     try {
       projects.value = await projectsService.getAll()
+      updateTimestamp('projects')
     } catch (e: any) {
       error.value = e.message
     } finally {
@@ -97,6 +103,7 @@ export const useProjectsStore = defineStore('projects', () => {
     } else if (payload.eventType === 'DELETE') {
       projects.value = projects.value.filter(p => p.id !== projectId)
     }
+    invalidateCache()
   }
 
   function subscribeToProjects() {
@@ -125,6 +132,8 @@ export const useProjectsStore = defineStore('projects', () => {
     updateProject,
     deleteProject,
     projectsService,
-    subscribeToProjects
+    subscribeToProjects,
+    invalidateCache,
+    isCacheValid
   }
 })

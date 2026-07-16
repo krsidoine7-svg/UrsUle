@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { supabase } from '@/services/supabase'
 import { tasksService } from '@/services/tasks.service'
 import { webhookService } from '@/services/webhook.service'
+import { useSmartCache } from '@/composables/useSmartCache'
 import type { Task, TaskFilters, CreateTaskDTO, UpdateTaskDTO, TimeSession } from '@/types/task.types'
 
 export const useTasksStore = defineStore('tasks', () => {
@@ -11,6 +12,8 @@ export const useTasksStore = defineStore('tasks', () => {
   const error = ref<string | null>(null)
   const activeFilters = ref<TaskFilters>({})
   const timeSessions = ref<TimeSession[]>([])
+
+  const { isCacheValid, updateTimestamp, invalidateCache } = useSmartCache({ defaultTTLSeconds: 300 })
 
   // IDs des tâches modifiées localement → on ignore le refetch Realtime redondant
   const _locallyUpdatedIds = new Set<string>()
@@ -38,11 +41,18 @@ export const useTasksStore = defineStore('tasks', () => {
   )
 
   // Actions
-  async function fetchTasks(filters?: TaskFilters) {
+  async function fetchTasks(filters?: TaskFilters, forceRefresh = false) {
+    const cacheKey = JSON.stringify(filters || {})
+    if (!forceRefresh && isCacheValid(cacheKey) && tasks.value.length > 0) {
+      activeFilters.value = filters || {}
+      return
+    }
+
     loading.value = true
     try {
       tasks.value = await tasksService.getAll(filters)
       activeFilters.value = filters || {}
+      updateTimestamp(cacheKey)
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : String(e)
     } finally {
@@ -282,6 +292,8 @@ export const useTasksStore = defineStore('tasks', () => {
     } else if (payload.eventType === 'DELETE') {
       tasks.value = tasks.value.filter(t => t.id !== taskId)
     }
+    // Invalide le cache pour que le prochain changement de vue recharge si le filtre a changé
+    invalidateCache()
   }
 
   function subscribeToTasks() {
@@ -332,6 +344,8 @@ export const useTasksStore = defineStore('tasks', () => {
     addTimeSession,
     fetchTimeSessions,
     updateSubtasksOrder,
-    subscribeToTasks
+    subscribeToTasks,
+    invalidateCache,
+    isCacheValid
   }
 })

@@ -165,6 +165,124 @@
 
         <Separator />
 
+        <!-- Notes liées (UrsUle Brain) -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-display font-semibold text-neutral-800 flex items-center gap-2">
+              <FileText class="h-4 w-4 text-primary-600" /> Notes liées
+            </h3>
+            <div class="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                class="text-xs h-7 gap-1 border-primary-200 text-primary-700 hover:bg-primary-50"
+                @click="showLinkNoteModal = !showLinkNoteModal"
+              >
+                <Link2 class="h-3.5 w-3.5" /> Lier une note
+              </Button>
+              <Button 
+                variant="default" 
+                size="sm" 
+                class="text-xs h-7 gap-1 bg-primary-600 hover:bg-primary-700 text-white"
+                @click="createNoteForTask"
+              >
+                <Plus class="h-3.5 w-3.5" /> Créer une note
+              </Button>
+            </div>
+          </div>
+
+          <!-- Mini sélecteur pour lier une note existante -->
+          <div v-if="showLinkNoteModal" class="p-3 rounded-xl bg-white border border-primary-200 shadow-md space-y-3 animate-in fade-in zoom-in-95 duration-150">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-neutral-700 flex items-center gap-1.5">
+                <Search class="h-3.5 w-3.5 text-primary-600" /> Choisir une note à lier
+              </span>
+              <button class="text-neutral-400 hover:text-neutral-600" @click="showLinkNoteModal = false">
+                <X class="h-4 w-4" />
+              </button>
+            </div>
+            <Input 
+              v-model="noteSearchQuery" 
+              placeholder="Rechercher par titre de note..." 
+              class="h-8 text-xs bg-neutral-50"
+            />
+            <div class="max-h-48 overflow-y-auto space-y-1">
+              <div 
+                v-for="n in availableNotesToLink" 
+                :key="n.id"
+                class="p-2 rounded-lg hover:bg-primary-50 cursor-pointer flex items-center justify-between text-xs transition-colors border border-transparent hover:border-primary-100"
+                @click="linkExistingNote(n)"
+              >
+                <div class="flex items-center gap-2 truncate pr-2">
+                  <FileText class="h-3.5 w-3.5 text-neutral-400 shrink-0" />
+                  <span class="font-medium text-neutral-800 truncate">{{ n.title }}</span>
+                </div>
+                <Badge variant="outline" class="text-[9px] shrink-0 bg-white">Lier</Badge>
+              </div>
+              <div v-if="availableNotesToLink.length === 0" class="text-center py-4 text-xs text-neutral-400 italic">
+                Aucune note disponible ou correspondante.
+              </div>
+            </div>
+          </div>
+
+          <!-- Liste des notes liées -->
+          <div v-if="linkedNotes.length > 0" class="grid grid-cols-1 gap-2.5">
+            <div 
+              v-for="note in linkedNotes" 
+              :key="note.id"
+              class="p-3 rounded-xl bg-gradient-to-r from-primary-50/40 to-neutral-50 border border-primary-100/80 hover:border-primary-300 transition-all flex items-center justify-between group"
+            >
+              <div class="flex items-center gap-3 overflow-hidden">
+                <div class="p-2 rounded-lg bg-white border border-primary-100 text-primary-600 shadow-sm">
+                  <FileText class="h-4 w-4" />
+                </div>
+                <div class="overflow-hidden">
+                  <h4 class="text-sm font-bold text-neutral-800 truncate group-hover:text-primary-700 transition-colors">
+                    {{ note.title }}
+                  </h4>
+                  <div class="flex items-center gap-2 text-[10px] text-neutral-400 mt-0.5">
+                    <span>Modifié le {{ formatDateSimple(note.updated_at) }}</span>
+                    <span v-if="note.tags?.length" class="flex gap-1">
+                      <span v-for="tag in note.tags.slice(0, 2)" :key="tag" class="px-1.5 py-0.5 rounded bg-primary-100/60 text-primary-700 font-medium">
+                        #{{ tag }}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  class="h-8 w-8 text-neutral-500 hover:text-primary-600 hover:bg-primary-50"
+                  @click="openNoteInBrain(note)"
+                  title="Ouvrir dans le Brain"
+                >
+                  <ExternalLink class="h-4 w-4" />
+                </Button>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  class="h-8 w-8 text-neutral-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                  @click="unlinkNote(note)"
+                  title="Détacher la note"
+                >
+                  <X class="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div v-else class="text-center py-6 border border-dashed border-neutral-200 rounded-xl bg-neutral-50/50">
+            <FileText class="h-8 w-8 text-neutral-300 mx-auto mb-2" />
+            <p class="text-xs text-neutral-500 font-medium">Aucune note liée à cette tâche.</p>
+            <p class="text-[11px] text-neutral-400 mt-0.5">Créez ou liez une note pour documenter votre avancement et vos apprentissages.</p>
+          </div>
+        </div>
+
+        <Separator />
+
         <!-- Images -->
         <div class="space-y-4">
           <div class="flex items-center justify-between">
@@ -268,7 +386,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -278,7 +397,7 @@ import {
   X, Pencil, Pin, Calendar, Clock, FolderOpen, 
   RefreshCw, ShieldCheck, MessageSquare, Send,
   Play, Pause, Timer, CheckCircle2, Image as ImageIcon, Trash2,
-  ArrowLeft
+  ArrowLeft, FileText, Plus, Link2, ExternalLink, Search
 } from 'lucide-vue-next'
 import { useTimer } from '@/composables/useTimer'
 import { useUIStore } from '@/stores/ui.store'
@@ -291,9 +410,11 @@ import FileUpload from '@/components/common/FileUpload.vue'
 import Lightbox from '@/components/common/Lightbox.vue'
 import { storageService } from '@/services/storage.service'
 import type { Task } from '@/types/task.types'
+import type { Note } from '@/types/brain.types'
 import { format, isBefore } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { useTasksStore } from '@/stores/tasks.store'
+import { useNotesStore } from '@/stores/notes.store'
 import { tasksService } from '@/services/tasks.service'
 import { useToast } from '@/components/ui/toast/use-toast'
 
@@ -309,6 +430,8 @@ const emit = defineEmits<{
 }>()
 
 const tasksStore = useTasksStore()
+const notesStore = useNotesStore()
+const router = useRouter()
 const uiStore = useUIStore()
 const { toast } = useToast()
 const { isRunning, currentTaskId, start, pause } = useTimer()
@@ -442,4 +565,71 @@ const formatDuration = (min: number) => {
 const isOverdue = computed(() => {
   return props.task?.deadline && isBefore(new Date(props.task.deadline), new Date()) && props.task.status !== 'done'
 })
+
+// ─── UrsUle Brain (Notes liées) ──────────────────────────────────
+onMounted(() => {
+  notesStore.fetchNotes()
+})
+
+const showLinkNoteModal = ref(false)
+const noteSearchQuery = ref('')
+
+const linkedNotes = computed(() => {
+  if (!currentTask.value) return []
+  return notesStore.notes.filter(n => n.linked_task_id === currentTask.value?.id && !n.deleted_at)
+})
+
+const availableNotesToLink = computed(() => {
+  if (!currentTask.value) return []
+  const q = noteSearchQuery.value.toLowerCase().trim()
+  return notesStore.notes.filter(n => 
+    !n.deleted_at && 
+    n.linked_task_id !== currentTask.value?.id &&
+    (!q || n.title.toLowerCase().includes(q))
+  ).slice(0, 10)
+})
+
+async function linkExistingNote(note: Note) {
+  if (!currentTask.value) return
+  try {
+    await notesStore.linkNoteToTask(note.id, currentTask.value.id)
+    showLinkNoteModal.value = false
+    noteSearchQuery.value = ''
+    toast({ title: 'Note liée avec succès ! 📝' })
+  } catch (e: any) {
+    toast({ title: 'Erreur', description: e.message, variant: 'destructive' })
+  }
+}
+
+async function createNoteForTask() {
+  if (!currentTask.value) return
+  try {
+    const templateContent = `## Description\n${currentTask.value.description || 'Aucune description initialement.'}\n\n## Apprentissages & Notes de réalisation\n- \n\n## Points à creuser / Questions\n- `
+    const newNote = await notesStore.createNote({
+      title: `[Tâche] ${currentTask.value.title}`,
+      content: templateContent,
+      linked_task_id: currentTask.value.id,
+      tags: ['tâche', ...(currentTask.value.tags || [])]
+    })
+    toast({ title: 'Note créée pour cette tâche ! ✨' })
+    emit('close')
+    router.push({ path: '/brain', query: { noteId: newNote.id } })
+  } catch (e: any) {
+    toast({ title: 'Erreur', description: e.message, variant: 'destructive' })
+  }
+}
+
+async function unlinkNote(note: Note) {
+  try {
+    await notesStore.linkNoteToTask(note.id, null)
+    toast({ title: 'Lien supprimé' })
+  } catch (e: any) {
+    toast({ title: 'Erreur', description: e.message, variant: 'destructive' })
+  }
+}
+
+function openNoteInBrain(note: Note) {
+  emit('close')
+  router.push({ path: '/brain', query: { noteId: note.id } })
+}
 </script>

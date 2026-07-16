@@ -159,16 +159,32 @@ const handleLogout = async () => {
       </div>
     </div>
 
-    <div class="flex items-center gap-4">
-      <!-- Search (Placeholder) -->
-      <div class="hidden md:flex items-center relative group">
-        <Search class="absolute left-3 h-4 w-4 text-neutral-400 group-focus-within:text-primary-600" />
-        <input 
-          type="text" 
-          placeholder="Rechercher..." 
-          class="bg-neutral-50 border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-2 focus:ring-primary-100 transition-all outline-none"
-        />
-      </div>
+    <div class="flex items-center gap-1.5 sm:gap-3 md:gap-4">
+      <!-- Search Button (Global Cmd+K) -->
+      <button
+        type="button"
+        @click="uiStore.openGlobalSearch()"
+        class="hidden md:flex items-center justify-between gap-3 bg-neutral-100/80 hover:bg-neutral-100 dark:bg-neutral-800 dark:hover:bg-neutral-700/80 border border-neutral-200/80 dark:border-neutral-700 rounded-full py-1.5 pl-3.5 pr-2.5 text-xs text-neutral-500 dark:text-neutral-400 w-64 lg:w-72 transition-all shadow-sm hover:border-primary-300"
+      >
+        <div class="flex items-center gap-2 overflow-hidden">
+          <Search class="h-3.5 w-3.5 text-neutral-400 shrink-0" />
+          <span class="truncate font-medium">Rechercher...</span>
+        </div>
+        <kbd class="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-neutral-500 dark:text-neutral-400 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded shadow-sm">
+          <span>⌘</span>K
+        </kbd>
+      </button>
+
+      <!-- Search Icon Button Mobile/Tablet -->
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        class="md:hidden text-neutral-600 rounded-full hover:bg-neutral-100"
+        title="Recherche Globale (Cmd+K)"
+        @click="uiStore.openGlobalSearch()"
+      >
+        <Search class="h-4 w-4" />
+      </Button>
 
       <Button 
         variant="outline"
@@ -181,7 +197,7 @@ const handleLogout = async () => {
       </Button>
 
       <Button 
-        class="bg-primary-600 hover:bg-primary-700 gap-2 shadow-sm shadow-primary-200"
+        class="bg-primary-600 hover:bg-primary-700 gap-1.5 sm:gap-2 px-3 sm:px-4 h-9 sm:h-10 text-xs sm:text-sm font-bold rounded-xl shadow-sm shadow-primary-200 shrink-0"
         @click="uiStore.openTaskForm()"
       >
         <Plus class="h-4 w-4" />

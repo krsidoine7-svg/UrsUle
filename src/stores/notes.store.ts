@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { supabase } from '@/services/supabase'
 import { notesService } from '@/services/notes.service'
 import { foldersService, type CreateFolderDTO, type UpdateFolderDTO, type FolderTreeNode } from '@/services/folders.service'
+import { useSmartCache } from '@/composables/useSmartCache'
 import type { Note, NoteFolder, CreateNoteDTO, UpdateNoteDTO } from '@/types/brain.types'
 
 export const useNotesStore = defineStore('notes', () => {
@@ -17,6 +18,8 @@ export const useNotesStore = defineStore('notes', () => {
   const loading = ref(false)
   const loadingTrash = ref(false)
   const error = ref<string | null>(null)
+
+  const { isCacheValid, updateTimestamp, invalidateCache } = useSmartCache({ defaultTTLSeconds: 300 })
   
   // État réactif des dossiers dépliés/expansés
   const expandedFolders = ref<Record<string, boolean>>({})
@@ -45,10 +48,13 @@ export const useNotesStore = defineStore('notes', () => {
 
   // ─── Fetch ──────────────────────────────────────────────────────
 
-  async function fetchNotes() {
+  async function fetchNotes(forceRefresh = false) {
+    if (!forceRefresh && isCacheValid('notes') && notes.value.length > 0) return
+
     loading.value = true
     try {
       notes.value = await notesService.getAll()
+      updateTimestamp('notes')
     } catch (e: any) {
       error.value = e.message
     } finally {
@@ -56,9 +62,12 @@ export const useNotesStore = defineStore('notes', () => {
     }
   }
 
-  async function fetchFolders() {
+  async function fetchFolders(forceRefresh = false) {
+    if (!forceRefresh && isCacheValid('folders') && folders.value.length > 0) return
+
     try {
       folders.value = await foldersService.getAll()
+      updateTimestamp('folders')
     } catch (e: any) {
       error.value = e.message
     }
@@ -205,6 +214,14 @@ export const useNotesStore = defineStore('notes', () => {
     }
   }
 
+  async function linkNoteToTask(id: string, taskId: string | null) {
+    return updateNote(id, { linked_task_id: taskId })
+  }
+
+  async function linkNoteToProject(id: string, projectId: string | null) {
+    return updateNote(id, { linked_project_id: projectId })
+  }
+
   /** Soft-delete : envoie la note à la corbeille */
   async function deleteNote(id: string) {
     try {
@@ -258,6 +275,23 @@ export const useNotesStore = defineStore('notes', () => {
     if (note) activeNote.value = note
   }
 
+  async function fetchNoteById(id: string): Promise<Note | null> {
+    try {
+      let note = notes.value.find(n => n.id === id)
+      if (!note) {
+        note = await notesService.getById(id)
+        if (note && !notes.value.some(n => n.id === note!.id)) {
+          notes.value.push(note)
+        }
+      }
+      if (note) activeNote.value = note
+      return note || null
+    } catch (e: any) {
+      console.error('Erreur dans fetchNoteById:', e)
+      return null
+    }
+  }
+
   function setSelectedFolder(id: string | null) {
     selectedFolder.value = id
   }
@@ -266,12 +300,14 @@ export const useNotesStore = defineStore('notes', () => {
 
   async function handleRealtimeFolderChange(payload: any) {
     console.log('Realtime folder change received:', payload)
-    await fetchFolders()
+    invalidateCache('folders')
+    await fetchFolders(true)
   }
 
   async function handleRealtimeNoteChange(payload: any) {
     console.log('Realtime note change received:', payload)
-    await fetchNotes()
+    invalidateCache('notes')
+    await fetchNotes(true)
     
     if (activeNote.value && (payload.new?.id === activeNote.value.id || payload.old?.id === activeNote.value.id)) {
       if (payload.eventType === 'DELETE') {
@@ -385,17 +421,22 @@ export const useNotesStore = defineStore('notes', () => {
     deleteFolderPermanent,
     createNote,
     updateNote,
+    linkNoteToTask,
+    linkNoteToProject,
     deleteNote,
     restoreNote,
     deleteNotePermanent,
     getNoteImpact,
     setActiveNote,
+    fetchNoteById,
     setSelectedFolder,
     toggleFolderExpanded,
     isFolderExpanded,
     setFolderExpanded,
     subscribeToNotesAndFolders,
     getJournalEntryForDate,
-    createJournalEntryForDate
+    createJournalEntryForDate,
+    invalidateCache,
+    isCacheValid
   }
 })

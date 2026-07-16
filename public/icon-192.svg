@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="ursule-grad-192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="50%" stop-color="#4F46E5" />
+      <stop offset="100%" stop-color="#7C3AED" />
+    </linearGradient>
+    <linearGradient id="inner-grad-192" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#E0E7FF" />
+    </linearGradient>
+  </defs>
+
+  <rect width="192" height="192" rx="48" fill="url(#ursule-grad-192)" />
+
+  <path d="M 60 52.5
+           L 60 108.75
+           C 60 136.88 78.75 151.88 96 151.88
+           C 113.25 151.88 132 136.88 132 108.75
+           L 132 52.5
+           L 111 52.5
+           L 111 108.75
+           C 111 125.63 104.25 132 96 132
+           C 87.75 132 81 125.63 81 108.75
+           L 81 52.5
+           Z" 
+        fill="url(#inner-grad-192)" />
+  <path d="M 138.75 41.25 L 141.75 48.75 L 149.25 51.75 L 141.75 54.75 L 138.75 62.25 L 135.75 54.75 L 128.25 51.75 L 135.75 48.75 Z" fill="#FBBF24" />
+</svg>

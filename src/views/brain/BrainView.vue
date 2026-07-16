@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import { computed, ref, onMounted, watch } from 'vue'
-import { Brain, FileText, Share2, Search, LibraryBig, Calendar, Waypoints, Network, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Trash2, Menu, X } from 'lucide-vue-next'
+import { Brain, FileText, Share2, Search, LibraryBig, Calendar, Waypoints, Network, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Trash2, Menu, X, BarChart2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { useNotesStore } from '@/stores/notes.store'
 import FolderTree from '@/components/brain/notes/FolderTree.vue'
@@ -49,6 +49,7 @@ const navLinks = [
   { path: '/brain/flashcards', label: 'Flashcards', icon: LibraryBig },
   { path: '/brain/mindmap', label: 'Mind Map', icon: Waypoints },
   { path: '/brain/journal', label: 'Journal', icon: Calendar },
+  { path: '/brain/stats', label: 'Stats', icon: BarChart2 },
 ]
  
 const currentPath = computed(() => {
@@ -287,7 +288,7 @@ function navigateTo(path: string) {
         <!-- Child View -->
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
-            <component :is="Component" />
+            <component :is="Component" :key="route.fullPath" />
           </transition>
         </router-view>
 

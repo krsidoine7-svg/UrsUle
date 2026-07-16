@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { useAuthStore } from '@/stores/auth.store'
+import { appUpdateService } from '@/services/appUpdate.service'
 import './assets/main.css'
 
 async function bootstrap() {
@@ -13,6 +14,9 @@ async function bootstrap() {
   
   const authStore = useAuthStore()
   await authStore.initialize()
+  
+  // Initialisation de la détection de mise à jour PWA/SW
+  appUpdateService.init()
   
   app.use(router)
   app.mount('#app')

@@ -209,6 +209,9 @@ import { ref, computed, onMounted, watch, type Ref } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import { useTasksStore } from '@/stores/tasks.store'
 import { useProjectsStore } from '@/stores/projects.store'
+import { useNotesStore } from '@/stores/notes.store'
+import { useFlashcardsStore } from '@/stores/flashcards.store'
+import { brainStatsService } from '@/services/brainStats.service'
 import { useUIStore } from '@/stores/ui.store'
 import { 
   CheckCircle2, 
@@ -221,7 +224,9 @@ import {
   Layout,
   Clock,
   ArrowUpRight,
-  Filter
+  Filter,
+  LibraryBig,
+  FileText
 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { 
@@ -251,9 +256,20 @@ import { exportToExcel, exportToPDF, formatTasksForExport } from '@/services/exp
 const authStore = useAuthStore()
 const tasksStore = useTasksStore()
 const projectsStore = useProjectsStore()
+const notesStore = useNotesStore()
+const flashcardsStore = useFlashcardsStore()
 const uiStore = useUIStore()
 
 const loading = ref(true)
+const brainStreak = ref(0)
+
+const lastActiveNote = computed(() => {
+  const activeNotes = notesStore.notes.filter(n => !n.deleted_at)
+  if (activeNotes.length === 0) return null
+  return activeNotes.reduce((prev, current) => {
+    return (new Date(current.updated_at || current.created_at) > new Date(prev.updated_at || prev.created_at)) ? current : prev
+  })
+})
 
 // Date Range State
 const dateRange = ref({
@@ -289,8 +305,14 @@ async function loadData() {
     await Promise.all([
       tasksStore.fetchTasks(),
       projectsStore.fetchProjects(),
-      tasksStore.fetchTimeSessions(10)
+      tasksStore.fetchTimeSessions(10),
+      notesStore.fetchNotes(),
+      flashcardsStore.fetchDueCards()
     ])
+    if (authStore.user) {
+      const heatmapRes = await brainStatsService.getJournalHeatmapAndStreak(authStore.user.id, 30)
+      brainStreak.value = heatmapRes.streak
+    }
   } finally {
     loading.value = false
   }

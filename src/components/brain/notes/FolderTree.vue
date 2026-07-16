@@ -14,7 +14,7 @@
         <span class="text-sm select-none">Toutes les notes</span>
       </div>
       <span class="text-[10px] font-extrabold text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded-full">
-        {{ notesStore.notes.length }}
+        {{ totalNotesCount }}
       </span>
     </div>
 
@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useNotesStore } from '@/stores/notes.store'
 import FolderTreeNode from './FolderTreeNode.vue'
 import FolderDialog from './FolderDialog.vue'
@@ -80,6 +80,10 @@ import { Library, FolderPlus } from 'lucide-vue-next'
 import type { FolderTreeNode as IFolderTreeNode } from '@/services/folders.service'
 
 const notesStore = useNotesStore()
+
+const totalNotesCount = computed(() => {
+  return notesStore.notes.filter(n => !n.is_journal && !n.deleted_at).length
+})
 
 // States des modaux premium
 const showFolderModal = ref(false)

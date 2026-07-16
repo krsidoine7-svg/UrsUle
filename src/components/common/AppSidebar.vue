@@ -158,11 +158,20 @@ const userInitials = computed(() => {
     </Button>
   </aside>
 
+  <!-- Mobile Overlay Backdrop -->
+  <Transition name="fade">
+    <div 
+      v-if="uiStore.sidebarMobileOpen" 
+      @click="uiStore.closeMobileSidebar()" 
+      class="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm z-50 lg:hidden transition-opacity cursor-pointer"
+    ></div>
+  </Transition>
+
   <!-- Mobile Sidebar (Drawer) -->
   <Transition name="slide">
     <aside 
       v-if="uiStore.sidebarMobileOpen"
-      class="fixed inset-y-0 left-0 w-72 flex flex-col bg-white border-r border-neutral-200 z-50 lg:hidden shadow-2xl"
+      class="fixed inset-y-0 left-0 w-72 flex flex-col bg-white border-r border-neutral-200 z-[60] lg:hidden shadow-2xl"
     >
       <!-- Mobile Header -->
       <div class="p-5 flex items-center justify-between h-20">

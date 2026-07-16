@@ -120,12 +120,32 @@ export interface NoteShare {
   id: string
   note_id: string
   owner_id: string
-  shared_with_email?: string
+  email?: string | null
+  shared_with_email?: string | null
   permission: SharePermission
-  share_token: string
-  expires_at?: string
+  share_token?: string | null
+  custom_slug?: string | null
+  target_block_id?: string | null
+  allowed_views: {
+    note: boolean
+    graph: boolean
+    mindmap: boolean
+    flashcards: boolean
+  }
+  expires_at?: string | null
   deleted_at?: string
   created_at: string
+}
+
+export interface NoteComment {
+  id: string
+  note_id: string
+  user_id?: string | null
+  author_name: string
+  content: string
+  created_at: string
+  deleted_at?: string
+  is_owner?: boolean
 }
 
 export interface CreateNoteDTO {
@@ -137,6 +157,8 @@ export interface CreateNoteDTO {
   journal_date?: string
   is_pinned?: boolean
   tags?: string[]
+  linked_task_id?: string | null
+  linked_project_id?: string | null
 }
 
 export interface UpdateNoteDTO extends Partial<CreateNoteDTO> {
@@ -144,4 +166,6 @@ export interface UpdateNoteDTO extends Partial<CreateNoteDTO> {
   is_archived?: boolean
   word_count?: number
   read_time_minutes?: number
+  linked_task_id?: string | null
+  linked_project_id?: string | null
 }

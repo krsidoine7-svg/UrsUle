@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import AppSidebar from '@/components/common/AppSidebar.vue'
@@ -8,8 +8,11 @@ import TaskForm from '@/components/tasks/TaskForm.vue'
 import TimerWidget from '@/components/common/TimerWidget.vue'
 import ValidationModal from '@/components/tasks/ValidationModal.vue'
 import AppreciationModal from '@/components/tasks/AppreciationModal.vue'
+import QuizDialog from '@/components/brain/quiz/QuizDialog.vue'
 import FocusMode from '@/components/common/FocusMode.vue'
 import ConsentModal from '@/components/common/ConsentModal.vue'
+import UpdateNotificationBanner from '@/components/common/UpdateNotificationBanner.vue'
+import SearchModal from '@/components/brain/SearchModal.vue'
 import { useUIStore } from '@/stores/ui.store'
 import { useTasksStore } from '@/stores/tasks.store'
 import { useProjectsStore } from '@/stores/projects.store'
@@ -36,6 +39,10 @@ const tasksStore = useTasksStore()
 const projectsStore = useProjectsStore()
 const notesStore = useNotesStore()
 
+const showQuizDialog = ref(false)
+const quizTask = ref<any>(null)
+const quizLinkedNote = ref<any>(null)
+
 const handleValidationSuccess = () => {
   uiStore.finishValidation(true)
 }
@@ -49,7 +56,8 @@ const handleValidationFailure = async (taskId: string) => {
 }
 
 const handleAppreciationSelect = async (appreciation: string) => {
-  const taskId = uiStore.taskToValidate?.id
+  const taskToVal = uiStore.taskToValidate
+  const taskId = taskToVal?.id
   if (!taskId) return
   
   await tasksStore.updateTask(taskId, {
@@ -67,6 +75,14 @@ const handleAppreciationSelect = async (appreciation: string) => {
   })
 
   uiStore.closeAppreciation()
+
+  // Enchaînement séquentiel vers QuizDialog (PKM)
+  const linkedNote = notesStore.notes.find(n => n.linked_task_id === taskId && !n.deleted_at)
+  if (linkedNote || taskToVal) {
+    quizTask.value = taskToVal
+    quizLinkedNote.value = linkedNote || null
+    showQuizDialog.value = true
+  }
 }
 
 let unsubscribeTasks: (() => void) | null = null
@@ -193,13 +209,23 @@ onUnmounted(() => {
     @select="handleAppreciationSelect"
   />
 
+  <QuizDialog 
+    :is-open="showQuizDialog"
+    :task="quizTask"
+    :note="quizLinkedNote"
+    @close="showQuizDialog = false; quizTask = null; quizLinkedNote = null"
+  />
+
   <FocusMode 
     v-if="uiStore.isFocusModeOpen"
     :initial-task-id="uiStore.focusTaskId ?? undefined"
     @close="uiStore.closeFocusMode"
   />
 
+  <SearchModal v-if="authStore.isAuthenticated" />
+
   <ConsentModal v-if="showLayout" />
+  <UpdateNotificationBanner />
 </template>
 
 <style>

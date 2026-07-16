@@ -29,36 +29,38 @@
           :style="{ color: node.color || '#64748b' }" 
         />
         
-        <span class="truncate text-sm font-semibold select-none">{{ node.name }}</span>
+        <span class="truncate text-sm font-semibold select-none" :title="node.name">{{ node.name }}</span>
       </div>
 
-      <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+      <div class="flex items-center gap-1.5 shrink-0">
         <span class="text-[10px] font-bold text-neutral-400 bg-neutral-100 px-1.5 py-0.5 rounded-md">{{ noteCount }}</span>
-        
-        <button
-          @click.stop="$emit('create-subfolder', node.id)"
-          class="p-1 rounded text-neutral-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
-          title="Nouveau sous-dossier"
-        >
-          <Plus class="w-3.5 h-3.5" />
-        </button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button class="p-1 rounded text-neutral-400 hover:text-neutral-900 hover:bg-neutral-200 transition-colors">
-              <MoreHorizontal class="w-3.5 h-3.5" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" class="w-48 rounded-xl shadow-lg border border-neutral-100 p-1">
-            <DropdownMenuItem @click.stop="$emit('rename', node)" class="rounded-lg py-2 cursor-pointer font-semibold text-neutral-700">
-              <Edit2 class="w-4 h-4 mr-2 text-neutral-400" /> Paramètres du dossier
-            </DropdownMenuItem>
-            <DropdownMenuSeparator class="my-1 bg-neutral-100" />
-            <DropdownMenuItem class="text-red-600 rounded-lg py-2 cursor-pointer font-semibold hover:bg-red-50" @click.stop="$emit('delete', node.id)">
-              <Trash2 class="w-4 h-4 mr-2" /> Supprimer
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            @click.stop="$emit('create-subfolder', node.id)"
+            class="p-1 rounded text-neutral-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+            title="Nouveau sous-dossier"
+          >
+            <Plus class="w-3.5 h-3.5" />
+          </button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button class="p-1 rounded text-neutral-400 hover:text-neutral-900 hover:bg-neutral-200 transition-colors">
+                <MoreHorizontal class="w-3.5 h-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" class="w-48 rounded-xl shadow-lg border border-neutral-100 p-1">
+              <DropdownMenuItem @click.stop="$emit('rename', node)" class="rounded-lg py-2 cursor-pointer font-semibold text-neutral-700">
+                <Edit2 class="w-4 h-4 mr-2 text-neutral-400" /> Paramètres du dossier
+              </DropdownMenuItem>
+              <DropdownMenuSeparator class="my-1 bg-neutral-100" />
+              <DropdownMenuItem class="text-red-600 rounded-lg py-2 cursor-pointer font-semibold hover:bg-red-50" @click.stop="$emit('delete', node.id)">
+                <Trash2 class="w-4 h-4 mr-2" /> Supprimer
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
 
@@ -126,7 +128,7 @@ const IconComponent = computed(() => {
 
 // Compter les notes dans ce dossier spécifique
 const noteCount = computed(() => {
-  return notesStore.notes.filter(n => n.folder_id === props.node.id).length
+  return notesStore.notes.filter(n => n.folder_id === props.node.id && !n.is_journal && !n.deleted_at).length
 })
 
 // Récupération et mutation de l'état d'expansion de manière réactive
