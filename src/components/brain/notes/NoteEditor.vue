@@ -97,6 +97,7 @@ const editor = useEditor({
     BlockAttributes,
     StarterKit.configure({
       codeBlock: false, // On utilise CodeBlockLowlight à la place
+      link: false, // Désactivé ici car on utilise Link.configure() séparément
     }),
     TaskList,
     TaskItem.configure({

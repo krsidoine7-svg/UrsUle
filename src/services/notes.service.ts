@@ -395,12 +395,13 @@ export const notesService = {
   },
 
   async updateShare(shareId: string, updates: Partial<NoteShare>): Promise<NoteShare> {
+    // Ne pas envoyer updated_at manuellement : le trigger DB s'en charge
+    // Retirer les champs non-modifiables pour éviter les erreurs de schema cache
+    const { id, created_at, updated_at, share_token, owner_id, note_id, ...safeUpdates } = updates as any
+    
     const { data, error } = await supabase
       .from('note_shares')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString()
-      })
+      .update(safeUpdates)
       .eq('id', shareId)
       .select('*')
       .single()

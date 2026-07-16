@@ -159,14 +159,32 @@ async function handleInviteEmail() {
   }
 }
 
-async function handleRevokeShare(shareId: string) {
-  if (!confirm('Voulez-vous vraiment révoquer cet accès ?')) return
+// Confirmation de révocation intégrée (remplace le confirm() natif)
+const pendingRevokeId = ref<string | null>(null)
+
+function askRevokeShare(shareId: string) {
+  pendingRevokeId.value = shareId
+}
+
+function cancelRevoke() {
+  pendingRevokeId.value = null
+}
+
+async function confirmRevokeShare() {
+  if (!pendingRevokeId.value) return
+  const shareId = pendingRevokeId.value
+  pendingRevokeId.value = null
   try {
     await notesService.deleteShare(shareId)
     shares.value = shares.value.filter(s => s.id !== shareId)
     emit('update')
-  } catch (e) {
-    console.error('Erreur lors de la suppression :', e)
+    toast({ title: 'Accès révoqué avec succès 🗑️' })
+  } catch (e: any) {
+    toast({
+      title: 'Erreur lors de la révocation',
+      description: e?.message || 'Impossible de révoquer cet accès.',
+      variant: 'destructive'
+    })
   }
 }
 
@@ -396,7 +414,7 @@ function copyToClipboard() {
                     <button
                       type="button"
                       class="px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-lg transition-colors flex items-center gap-1.5"
-                      @click="handleRevokeShare(activeLinkShare.id)"
+                      @click="askRevokeShare(activeLinkShare.id)"
                     >
                       <Trash2 class="w-3.5 h-3.5" />
                       Désactiver ce lien public
@@ -547,7 +565,7 @@ function copyToClipboard() {
                   type="button"
                   class="p-2 text-neutral-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors"
                   title="Révoquer l'accès"
-                  @click="handleRevokeShare(s.id)"
+                  @click="askRevokeShare(s.id)"
                 >
                   <Trash2 class="w-4 h-4" />
                 </button>
@@ -567,6 +585,43 @@ function copyToClipboard() {
             Fermer
           </button>
         </div>
+
+        <!-- Dialogue de confirmation de révocation (overlay intégré) -->
+        <Teleport to="body">
+          <div
+            v-if="pendingRevokeId"
+            class="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-150"
+            @click.self="cancelRevoke"
+          >
+            <div class="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-neutral-200 dark:border-neutral-800 p-6 max-w-sm w-full space-y-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/50 flex items-center justify-center">
+                  <Trash2 class="w-5 h-5 text-red-500" />
+                </div>
+                <div>
+                  <h4 class="font-semibold text-neutral-900 dark:text-white text-sm">Révoquer cet accès ?</h4>
+                  <p class="text-xs text-neutral-500 dark:text-neutral-400">Cette action est irréversible. Le lien ou l'invitation sera définitivement supprimé.</p>
+                </div>
+              </div>
+              <div class="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  class="px-4 py-2 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 rounded-xl text-xs font-medium transition-colors"
+                  @click="cancelRevoke"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold transition-colors shadow-sm"
+                  @click="confirmRevokeShare"
+                >
+                  Oui, révoquer
+                </button>
+              </div>
+            </div>
+          </div>
+        </Teleport>
 
       </div>
     </div>

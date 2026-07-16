@@ -30,10 +30,15 @@ export function usePushNotifications() {
 
   async function subscribeToPush(registration: ServiceWorkerRegistration) {
     try {
-      // Clé publique VAPID de Supabase / Push
-      // Si la clé n'est pas présente, on utilise une clé de test standard
-      const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BFs_M_XwR4eE5gN8iZ_D7bMhJ7x8C6gK5d4s3a2P1o0n9m8l7k6j5h4g3f2d1s0a_e'
-      
+      // Clé publique VAPID — requise pour l'abonnement Push
+      const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY
+
+      // Si aucune clé VAPID valide n'est configurée, on ne tente pas l'abonnement
+      if (!vapidPublicKey || vapidPublicKey.length < 60) {
+        console.info('[Push] Aucune clé VAPID configurée (VITE_VAPID_PUBLIC_KEY). Notifications push désactivées.')
+        return null
+      }
+
       // Convertir la clé VAPID en Uint8Array
       const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey)
 
@@ -66,7 +71,7 @@ export function usePushNotifications() {
 
       return subscription
     } catch (error) {
-      console.error('Failed to subscribe to push notifications:', error)
+      console.warn('[Push] Abonnement push non disponible:', (error as Error).message)
       return null
     }
   }
