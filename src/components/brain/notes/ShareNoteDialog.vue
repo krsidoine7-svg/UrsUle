@@ -1,3 +1,4 @@
+<script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { notesService } from '@/services/notes.service'
 import type { Note, NoteShare } from '@/types/brain.types'
